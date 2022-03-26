@@ -7,4 +7,6 @@ export class NewWalletTransactionDTO {
     type: string;
     @IsNotEmpty()
     amount: string;
+    @IsNotEmpty()
+    description: string;
 }
