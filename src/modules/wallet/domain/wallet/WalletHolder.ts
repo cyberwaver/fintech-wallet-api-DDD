@@ -1,24 +1,24 @@
 import { plainToInstance } from "class-transformer";
 import { Entity } from "src/shared/domain/Entity";
-import { NewWalletHolderDTO, WalletHolderDTO } from "./DTOs/index.dtos";
+import { UniqueEntityID } from "src/shared/domain/UniqueEntityID";
+import { NewWalletHolderDTO, WalletHolderDTO } from "./DTOs/dtos.index";
 import { WalletHolderStatus } from "./WalletHolderStatus";
 
+class WalletHolderProps {
+  id: UniqueEntityID;
+  walletId: string;
+  accountId: string;
+  status: WalletHolderStatus;
+  isCreator: boolean;
+  createdAt: string;
+}
 
-export class WalletHolder extends Entity<WalletHolderDTO> {
-    walletId: string;
-    accountId: string;
-    status: WalletHolderStatus;
-    isCreator: boolean;
-    createdAt: string;
+export class WalletHolder extends Entity<WalletHolderProps> {
+  constructor(dto: WalletHolderDTO) {
+    super(dto, WalletHolderProps);
+  }
 
-    constructor(props: WalletHolderDTO) {
-        super(props.id, WalletHolderDTO);
-        this.walletId = props.walletId;
-        this.status = new WalletHolderStatus(props.status);
-        this.createdAt = props.createdAt;
-    }
-
-     Create(data: NewWalletHolderDTO): WalletHolder {
-        return plainToInstance(WalletHolder, data);
-    }
+  Create(data: NewWalletHolderDTO): WalletHolder {
+    return plainToInstance(WalletHolder, data);
+  }
 }

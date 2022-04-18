@@ -1,15 +1,68 @@
+import { Type } from "class-transformer";
 import { Entity } from "src/shared/domain/Entity";
-import { NewWalletTransactionDTO, WalletTransactionDTO } from "./DTOs/index.dtos";
+import { UniqueEntityID } from "src/shared/domain/UniqueEntityID";
+import { NewWalletTransactionDTO, WalletTransactionDTO } from "./DTOs/dtos.index";
+import { WalletTransactionSignedEvent, WalletTxnCompletedEvent } from "./events/events.index";
+import { WalletHolder } from "./WalletHolder";
+import { WalletTransactionSignee } from "./WalletTransactionSignee";
+import { WalletTransactionStatus } from "./WalletTransactionStatus";
+import { WalletTransactionType } from "./WalletTransactionType";
 
-export class WalletTransaction extends Entity<WalletTransactionDTO> {
+export class WalletProps {
+  @Type(() => UniqueEntityID)
+  id: UniqueEntityID;
   walletId: string;
-  accountId: string;
-  status: string;
-  createdAt: string;
+  @Type(() => WalletTransactionType)
+  type: WalletTransactionType;
+  amount: number;
+  @Type(() => WalletTransactionStatus)
+  status: WalletTransactionStatus;
+  @Type(() => WalletTransactionSignee)
+  signees: WalletTransactionSignee[];
+  @Type(() => Date)
+  createdAt: Date;
+}
 
-  constructor(props: WalletTransactionDTO) {
-    super(props.id, WalletTransactionDTO);
+export class WalletTransaction extends Entity<WalletProps> {
+  constructor(dto?: WalletTransactionDTO) {
+    super(dto, WalletProps);
   }
 
-  async Create(data: NewWalletTransactionDTO) {}
+  public get status(): WalletTransactionStatus {
+    return this.props.status;
+  }
+
+  public get IS_DEBIT(): boolean {
+    return this.props.type.equals(WalletTransactionType.Debit);
+  }
+
+  public get IS_CREDIT(): boolean {
+    return !this.IS_DEBIT;
+  }
+
+  public get SIGNEES_COUNT(): number {
+    return this.props.signees.length;
+  }
+
+  isASignee(holder: WalletHolder): boolean {
+    return this.props.signees.some((s) => s.value.holderId === holder.ID.toString());
+  }
+
+  addASignee(holderId: string) {
+    this.props.signees.push(new WalletTransactionSignee({ holderId }));
+  }
+
+  public static Create(request: NewWalletTransactionDTO): WalletTransaction {
+    const transaction = new WalletTransaction(request);
+    transaction.addASignee(request.holderId);
+    return transaction;
+  }
+
+  private $whenWalletTransactionSignedEvent($event: WalletTransactionSignedEvent) {
+    this.addASignee($event.payload.holderId);
+  }
+
+  private $whenWalletTxnCompletedEvent($event: WalletTxnCompletedEvent) {
+    this.props.status = WalletTransactionStatus.Completed;
+  }
 }

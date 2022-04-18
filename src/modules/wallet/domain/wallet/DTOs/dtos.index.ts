@@ -4,3 +4,5 @@ export * from "./WalletDTO";
 export * from "./WalletTransactionDTO";
 export * from "./WalletHolderDTO";
 export * from "./NewWalletHolderDTO";
+export * from "./CompleteTransactionRequestDTO";
+export * from "./SignTransactionRequestDTO";

@@ -1,11 +1,15 @@
 import { DomainEvent } from "src/shared/domain/event/DomainEvent";
-import { WalletDTO } from "../DTOs/WalletDTO";
-import { Wallet } from "../Wallet";
+import { UniqueEntityID } from "src/shared/domain/UniqueEntityID";
+import { NewWalletDTO } from "../DTOs/dtos.index";
 
 export class WalletCreatedEvent extends DomainEvent {
-    public wallet: WalletDTO
-    constructor(wallet: Wallet) {
-        super(wallet.ID);
-        this.wallet = wallet.toDTO();
-    }
+  public payload: WalletCreatedEventPayload;
+  constructor(data: NewWalletDTO, id: UniqueEntityID = new UniqueEntityID()) {
+    super(id);
+    this.payload = { ...data, walletId: id.toString() };
+  }
+}
+
+class WalletCreatedEventPayload extends NewWalletDTO {
+  walletId: string;
 }
