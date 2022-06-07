@@ -4,10 +4,10 @@ export class WalletTransactionStatus extends ValueObject<string> {
   constructor(value: string) {
     super(value.toUpperCase());
   }
-  public static get Pending(): WalletTransactionStatus {
-    return new WalletTransactionStatus("PENDING");
-  }
-  public static get Completed(): WalletTransactionStatus {
-    return new WalletTransactionStatus("COMPLETED");
-  }
+
+  public readonly IS_PENDING = this.equals(WalletTransactionStatus.Pending);
+  public readonly IS_COMPLETED = this.equals(WalletTransactionStatus.Completed);
+
+  public static readonly Pending = new WalletTransactionStatus("PENDING");
+  public static readonly Completed = new WalletTransactionStatus("COMPLETED");
 }

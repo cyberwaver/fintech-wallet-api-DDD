@@ -8,7 +8,7 @@ export class WalletHolderAccountShouldBeVerified extends BusinessRule {
   }
 
   public async isBroken(): Promise<boolean> {
-    const accountIsVerified = this.walletService.isUserAccountVerified(this.accountId);
+    const accountIsVerified = await this.walletService.isUserAccountVerified(this.accountId);
     return accountIsVerified ? false : true;
   }
 }

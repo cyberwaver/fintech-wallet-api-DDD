@@ -32,12 +32,8 @@ export class WalletTransaction extends Entity<WalletProps> {
     return this.props.status;
   }
 
-  public get IS_DEBIT(): boolean {
-    return this.props.type.equals(WalletTransactionType.Debit);
-  }
-
-  public get IS_CREDIT(): boolean {
-    return !this.IS_DEBIT;
+  public get type(): WalletTransactionType {
+    return this.props.type;
   }
 
   public get SIGNEES_COUNT(): number {

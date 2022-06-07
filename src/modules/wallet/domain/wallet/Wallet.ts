@@ -89,7 +89,7 @@ export class Wallet extends AggregateRoot<WalletProps> {
   async completeTransaction(request: CompleteTransactionRequestDTO): Promise<void> {
     const transaction = this.findTransaction(request.transactionId);
     await this.checkRule(new TransactionShouldNotHaveBeenCompleted(transaction));
-    if (transaction.IS_DEBIT) {
+    if (transaction.type.IS_DEBIT) {
       await this.checkRule(new WalletTxnShouldBeSignedByMinNumOfHolders(this.props, transaction));
     }
     const walletTxnCompletedEvent = new WalletTxnCompletedEvent(request);

@@ -4,10 +4,10 @@ export class WalletHolderStatus extends ValueObject<string> {
   constructor(value: string) {
     super(value.toUpperCase());
   }
-  public static Active(): WalletHolderStatus {
-    return new WalletHolderStatus("ACTIVE");
-  }
-  public static Inactive(): WalletHolderStatus {
-    return new WalletHolderStatus("INACTIVE");
-  }
+
+  public readonly IS_ACTIVE = this.equals(WalletHolderStatus.Active);
+  public readonly IS_INACTIVE = this.equals(WalletHolderStatus.Inactive);
+
+  public static readonly Active = new WalletHolderStatus("ACTIVE");
+  public static readonly Inactive = new WalletHolderStatus("INACTIVE");
 }
