@@ -1,17 +1,17 @@
-import { AggregateRoot } from "src/shared/domain/AggregateRoot";
-import { UniqueEntityID } from "src/shared/domain/UniqueEntityID";
+import { AggregateRoot } from 'src/common/domain/AggregateRoot';
+import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
 import {
   NewTransferPaymentRequestDTO,
   NewTopupPaymentRequestDTO,
   NewWithdrawalPaymentRequestDTO,
-} from "./DTOs/dtos.index";
+} from './DTOs/dtos.index';
 import {
   TopupPaymentCreatedEvent,
   TransferPaymentCreatedEvent,
   WithdrawalPaymentCreatedEvent,
-} from "./events/events.index";
-import { PaymentStatus } from "./PaymentStatus";
-import { PaymentType } from "./PaymentType";
+} from './events/events.index';
+import { PaymentStatus } from './PaymentStatus';
+import { PaymentType } from './PaymentType';
 
 class PaymentProps {
   id: UniqueEntityID;
@@ -21,12 +21,12 @@ class PaymentProps {
   status: PaymentStatus;
   createdAt: Date;
   processedAt: Date;
-  meta: object;
+  meta: Record<string, unknown>;
 }
 
 export class Payment extends AggregateRoot<PaymentProps> {
   public readonly type = this.props.type;
-  constructor(dto?: object) {
+  constructor(dto?: Record<string, unknown>) {
     super(dto, PaymentProps);
   }
 
@@ -48,7 +48,7 @@ export class Payment extends AggregateRoot<PaymentProps> {
     return payment;
   }
 
-  private $whenTransferPaymentCreatedEvent($event: TransferPaymentCreatedEvent) {
+  private $onTransferPaymentCreatedEvent($event: TransferPaymentCreatedEvent) {
     this.props.type = PaymentType.Transfer;
     this.props.walletId = new UniqueEntityID($event.payload.fromWalletId);
     this.props.amount = $event.payload.amount;
@@ -58,14 +58,14 @@ export class Payment extends AggregateRoot<PaymentProps> {
     };
   }
 
-  private $whenTopupPaymentCreatedEvent($event: TopupPaymentCreatedEvent) {
+  private $onTopupPaymentCreatedEvent($event: TopupPaymentCreatedEvent) {
     this.props.type = PaymentType.Transfer;
     this.props.walletId = new UniqueEntityID($event.payload.walletId);
     this.props.amount = $event.payload.amount;
     this.props.status = PaymentStatus.Pending;
   }
 
-  private $whenWithdrawalPaymentCreatedEvent($event: WithdrawalPaymentCreatedEvent) {
+  private $onWithdrawalPaymentCreatedEvent($event: WithdrawalPaymentCreatedEvent) {
     this.props.type = PaymentType.Transfer;
     this.props.walletId = new UniqueEntityID($event.payload.walletId);
     this.props.amount = $event.payload.amount;

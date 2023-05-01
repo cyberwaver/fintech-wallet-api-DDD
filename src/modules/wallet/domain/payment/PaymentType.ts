@@ -1,4 +1,4 @@
-import { ValueObject } from "src/shared/domain/ValueObject";
+import { ValueObject } from 'src/common/domain/ValueObject';
 
 export class PaymentType extends ValueObject<string> {
   constructor(value: string) {
@@ -9,7 +9,7 @@ export class PaymentType extends ValueObject<string> {
   public readonly IS_TRANSFER = this.equals(PaymentType.Transfer);
   public readonly IS_WITHDRAWAL = this.equals(PaymentType.Withdrawal);
 
-  public static TopUp = new PaymentType("TOPUP");
-  public static Transfer = new PaymentType("TRANSFER");
-  public static Withdrawal = new PaymentType("WITHDRAWAL");
+  public static TopUp = new PaymentType('TOPUP');
+  public static Transfer = new PaymentType('TRANSFER');
+  public static Withdrawal = new PaymentType('WITHDRAWAL');
 }

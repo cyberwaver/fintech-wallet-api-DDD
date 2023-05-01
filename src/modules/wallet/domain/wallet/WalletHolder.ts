@@ -1,8 +1,8 @@
-import { plainToInstance } from "class-transformer";
-import { Entity } from "src/shared/domain/Entity";
-import { UniqueEntityID } from "src/shared/domain/UniqueEntityID";
-import { NewWalletHolderDTO, WalletHolderDTO } from "./DTOs/dtos.index";
-import { WalletHolderStatus } from "./WalletHolderStatus";
+import { plainToInstance } from 'class-transformer';
+import { Entity } from 'src/common/domain/Entity';
+import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
+import { NewWalletHolderDTO, WalletHolderDTO } from './DTOs/dtos.index';
+import { WalletHolderStatus } from './WalletHolderStatus';
 
 class WalletHolderProps {
   id: UniqueEntityID;
@@ -18,7 +18,7 @@ export class WalletHolder extends Entity<WalletHolderProps> {
     super(dto, WalletHolderProps);
   }
 
-  Create(data: NewWalletHolderDTO): WalletHolder {
+  public static create(data: NewWalletHolderDTO): WalletHolder {
     return plainToInstance(WalletHolder, data);
   }
 }

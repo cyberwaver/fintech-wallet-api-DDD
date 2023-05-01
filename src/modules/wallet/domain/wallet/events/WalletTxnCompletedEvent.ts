@@ -1,6 +1,6 @@
-import { DomainEvent } from "src/shared/domain/event/DomainEvent";
-import { UniqueEntityID } from "src/shared/domain/UniqueEntityID";
-import { CompleteTransactionRequestDTO } from "../DTOs/dtos.index";
+import { DomainEvent } from 'src/common/domain/event/DomainEvent';
+import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
+import { CompleteTransactionRequestDTO } from '../DTOs/dtos.index';
 
 export class WalletTxnCompletedEvent extends DomainEvent {
   public payload: WalletTxnCompletedEventPayload;

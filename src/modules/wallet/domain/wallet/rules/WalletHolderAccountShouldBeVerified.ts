@@ -1,8 +1,8 @@
-import { BusinessRule } from "src/shared/domain/rule/BusinessRule";
-import { WalletService } from "../../WalletService";
+import { BusinessRule } from 'src/common/domain/rule/BusinessRule';
+import { WalletService } from '../../WalletService';
 
 export class WalletHolderAccountShouldBeVerified extends BusinessRule {
-  message = "Wallet holder account has not been verified";
+  message = 'Wallet holder account has not been verified';
   constructor(private accountId: string, private walletService: WalletService) {
     super();
   }

@@ -1,4 +1,4 @@
-import { ValueObject } from "src/shared/domain/ValueObject";
+import { ValueObject } from 'src/common/domain/ValueObject';
 
 export class WalletStatus extends ValueObject<string> {
   constructor(value: string) {
@@ -8,6 +8,6 @@ export class WalletStatus extends ValueObject<string> {
   public readonly IS_ACTIVE = this.equals(WalletStatus.Active);
   public readonly IS_INACTIVE = this.equals(WalletStatus.Inactive);
 
-  public static readonly Active = new WalletStatus("ACTIVE");
-  public static readonly Inactive = new WalletStatus("INACTIVE");
+  public static readonly Active = new WalletStatus('ACTIVE');
+  public static readonly Inactive = new WalletStatus('INACTIVE');
 }

@@ -1,5 +1,5 @@
-import { UniqueEntityID } from "src/shared/domain/UniqueEntityID";
-import { ValueObject } from "src/shared/domain/ValueObject";
+import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
+import { ValueObject } from 'src/common/domain/ValueObject';
 
 class WalletTransactionSigneeValue {
   holderId: string;

@@ -1,4 +1,4 @@
-import { ValueObject } from "src/shared/domain/ValueObject";
+import { ValueObject } from 'src/common/domain/ValueObject';
 
 export class WalletTransactionStatus extends ValueObject<string> {
   constructor(value: string) {
@@ -8,6 +8,6 @@ export class WalletTransactionStatus extends ValueObject<string> {
   public readonly IS_PENDING = this.equals(WalletTransactionStatus.Pending);
   public readonly IS_COMPLETED = this.equals(WalletTransactionStatus.Completed);
 
-  public static readonly Pending = new WalletTransactionStatus("PENDING");
-  public static readonly Completed = new WalletTransactionStatus("COMPLETED");
+  public static readonly Pending = new WalletTransactionStatus('PENDING');
+  public static readonly Completed = new WalletTransactionStatus('COMPLETED');
 }

@@ -1,9 +1,9 @@
-import { BusinessRule } from "src/shared/domain/rule/BusinessRule";
-import { WalletHolder } from "../WalletHolder";
-import { WalletTransaction } from "../WalletTransaction";
+import { BusinessRule } from 'src/common/domain/rule/BusinessRule';
+import { WalletHolder } from '../WalletHolder';
+import { WalletTransaction } from '../WalletTransaction';
 
 export class TransactionSigneeShouldBeUnique extends BusinessRule {
-  message = "Wallet transaction can contain only unique signees";
+  message = 'Wallet transaction can contain only unique signees';
   constructor(private transaction: WalletTransaction, private holder: WalletHolder) {
     super();
   }

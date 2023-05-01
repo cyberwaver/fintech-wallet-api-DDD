@@ -1,5 +1,5 @@
-import { ValueObject } from "src/shared/domain/ValueObject";
-import { DomainValidationException } from "src/shared/exceptions/DomainValidationException";
+import { ValueObject } from 'src/common/domain/ValueObject';
+import { DomainValidationException } from 'src/common/exceptions/DomainValidationException';
 
 export class WalletBalance extends ValueObject<number> {
   constructor(amount: number) {
@@ -20,7 +20,7 @@ export class WalletBalance extends ValueObject<number> {
 
   public subtract(amount: number): WalletBalance {
     if (this.isLessThan(amount)) {
-      throw new DomainValidationException("Balance is less than amount to be subtracted");
+      throw new DomainValidationException('Balance is less than amount to be subtracted');
     }
     return new WalletBalance(this.value - amount);
   }

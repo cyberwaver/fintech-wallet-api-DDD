@@ -1,9 +1,9 @@
-import { BusinessRule } from "src/shared/domain/rule/BusinessRule";
-import { WalletService } from "../../WalletService";
-import { WalletProps } from "../Wallet";
+import { BusinessRule } from 'src/common/domain/rule/BusinessRule';
+import { WalletService } from '../../WalletService';
+import { WalletProps } from '../Wallet';
 
 export class MaxDailyCreditAmountLimitShouldNotBeExceeded extends BusinessRule {
-  message = "Wallet maximum daily credit amount limit will be or has been exceeded";
+  message = 'Wallet maximum daily credit amount limit will be or has been exceeded';
   constructor(
     private wallet: WalletProps,
     private amount: number,

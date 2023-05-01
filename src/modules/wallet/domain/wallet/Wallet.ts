@@ -1,25 +1,25 @@
-import { plainToInstance, Type } from "class-transformer";
-import { AggregateRoot } from "src/shared/domain/AggregateRoot";
+import { plainToClass, Type } from 'class-transformer';
+import { AggregateRoot } from 'src/common/domain/AggregateRoot';
 import {
   NewWalletDTO,
   NewWalletTransactionDTO,
-  WalletDTO,
   CompleteTransactionRequestDTO,
   SignTransactionRequestDTO,
-} from "./DTOs/dtos.index";
+  NewWalletLienDTO,
+} from './DTOs/dtos.index';
 import {
   WalletCreatedEvent,
   WalletTransactionSignedEvent,
-  WalletDebitTxnCreatedEvent,
-  WalletCreditTxnCreatedEvent,
+  WalletFinancialTxnCreatedEvent,
   WalletTxnCompletedEvent,
-} from "./events/events.index";
-import { WalletHolder } from "./WalletHolder";
-import { WalletTransaction } from "./WalletTransaction";
-import { WalletStatus } from "./WalletStatus";
-import { WalletType } from "./WalletType";
-import { UniqueEntityID } from "src/shared/domain/UniqueEntityID";
-import { WalletService } from "../WalletService";
+  WalletSettlementTxnCreatedEvent,
+} from './events/events.index';
+import { WalletHolder } from './WalletHolder';
+import { WalletTransaction } from './WalletTransaction';
+import { WalletStatus } from './WalletStatus';
+import { WalletType } from './WalletType';
+import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
+import { WalletService } from '../WalletService';
 import {
   MaxDailyCreditAmountLimitShouldNotBeExceeded,
   MaxDailyDebitAmountLimitShouldNotBeExceeded,
@@ -28,8 +28,16 @@ import {
   TxnAmountShouldNotExceedBalance,
   WalletHolderAccountShouldBeVerified,
   WalletTxnShouldBeSignedByMinNumOfHolders,
-} from "./rules/rules.index";
-import { WalletBalance } from "./WalletBalance";
+  LienShouldBeActive,
+  LienReleaseAmountShouldNotBeGreaterThanAvailableBalance,
+} from './rules/rules.index';
+import { WalletBalance } from './WalletBalance';
+import { DomainValidationException } from 'src/common/exceptions/exceptions.index';
+import { WalletTransactionType } from './WalletTransactionType';
+import { WalletLien } from './WalletLien';
+import { WalletAuthTxnCreatedEvent } from './events/WalletAuthTxnCreatedEvent';
+import { WalletLienStatus } from './WalletLienStatus';
+import { WalletTransactionAction } from './WalletTransactionAction';
 
 export class WalletProps {
   id: UniqueEntityID;
@@ -48,13 +56,15 @@ export class WalletProps {
   holders: WalletHolder[];
   @Type(() => WalletTransaction)
   transactions: WalletTransaction[];
+  @Type(() => WalletLien)
+  liens: WalletLien[];
   createdAt: Date;
-  meta: object;
+  meta: unknown;
 }
 
 export class Wallet extends AggregateRoot<WalletProps> {
-  constructor(dto?: WalletDTO) {
-    super(dto, WalletProps);
+  constructor(props?: WalletProps) {
+    super(props);
   }
 
   private findTransaction(id: string): WalletTransaction {
@@ -65,75 +75,148 @@ export class Wallet extends AggregateRoot<WalletProps> {
     return this.props.holders.find((h) => h.ID.equals(new UniqueEntityID(id)));
   }
 
-  async createCreditTransaction(
+  public async handleTransactionRequest(
     request: NewWalletTransactionDTO,
     walletService: WalletService,
-  ): Promise<void> {
-    await this.checkRule(
-      new MaxDailyCreditAmountLimitShouldNotBeExceeded(this.props, request.amount, walletService),
-    );
-    this.apply(new WalletCreditTxnCreatedEvent(request));
+  ): Promise<UniqueEntityID> {
+    const transactionId = new UniqueEntityID();
+    const type = new WalletTransactionType(request.type);
+    if (type.IS_AUTH) this.handleAuthorizationRequest(request, transactionId, walletService);
+    else if (type.IS_FINANCIAL) this.handleFinancialRequest(request, transactionId, walletService);
+    else if (type.IS_SETTLEMENT) this.handleSettlementRequest(request, transactionId);
+    return transactionId;
   }
 
-  async createDebitTransaction(
+  private async handleAuthorizationRequest(
     request: NewWalletTransactionDTO,
+    transactionId: UniqueEntityID,
     walletService: WalletService,
   ): Promise<void> {
     await this.checkRule(new TxnAmountShouldNotExceedBalance(this.props.balance, request.amount));
     await this.checkRule(
       new MaxDailyDebitAmountLimitShouldNotBeExceeded(this.props, request.amount, walletService),
     );
-    this.apply(new WalletDebitTxnCreatedEvent(request));
+    this.apply(new WalletAuthTxnCreatedEvent(request, transactionId));
+  }
+
+  private async handleFinancialRequest(
+    request: NewWalletTransactionDTO,
+    transactionId: UniqueEntityID,
+    walletService: WalletService,
+  ): Promise<void> {
+    if (WalletTransactionAction.Credit.equals(request.action)) {
+      await this.checkRule(
+        new MaxDailyCreditAmountLimitShouldNotBeExceeded(this.props, request.amount, walletService),
+      );
+    } else {
+      await this.checkRule(new TxnAmountShouldNotExceedBalance(this.props.balance, request.amount));
+      await this.checkRule(
+        new MaxDailyDebitAmountLimitShouldNotBeExceeded(this.props, request.amount, walletService),
+      );
+    }
+    this.apply(new WalletFinancialTxnCreatedEvent(request, transactionId));
+  }
+
+  private async handleSettlementRequest(
+    request: NewWalletTransactionDTO,
+    transactionId: UniqueEntityID,
+  ): Promise<void> {
+    const lien = this.props.liens.find((lien) => lien.txnId.equals(request.referenceTxnId));
+    if (!lien) {
+      throw new DomainValidationException('Lien not found for settlement transaction request');
+    }
+
+    await this.checkRule(new LienShouldBeActive(lien));
+    await this.checkRule(
+      new LienReleaseAmountShouldNotBeGreaterThanAvailableBalance(
+        request.amount,
+        lien,
+        this.props.balance,
+      ),
+    );
+    this.apply(new WalletSettlementTxnCreatedEvent(request, transactionId));
   }
 
   async completeTransaction(request: CompleteTransactionRequestDTO): Promise<void> {
     const transaction = this.findTransaction(request.transactionId);
     await this.checkRule(new TransactionShouldNotHaveBeenCompleted(transaction));
-    if (transaction.type.IS_DEBIT) {
+    if (transaction.action.IS_DEBIT) {
       await this.checkRule(new WalletTxnShouldBeSignedByMinNumOfHolders(this.props, transaction));
     }
     const walletTxnCompletedEvent = new WalletTxnCompletedEvent(request);
-    transaction.apply(walletTxnCompletedEvent);
-    this.addDomainEvent(walletTxnCompletedEvent);
+    this.apply(walletTxnCompletedEvent);
   }
 
   async signTransaction(request: SignTransactionRequestDTO): Promise<void> {
     const transaction = this.findTransaction(request.transactionId);
+    if (!transaction) {
+      throw new DomainValidationException('Transaction not found.');
+    }
     const holder = this.findHolder(request.holderId);
     await this.checkRule(new TransactionShouldNotHaveBeenCompleted(transaction));
     await this.checkRule(new TransactionSigneeShouldBeUnique(transaction, holder));
     const walletTransactionSignedEvent = new WalletTransactionSignedEvent(request);
-    transaction.apply(walletTransactionSignedEvent);
-    this.addDomainEvent(walletTransactionSignedEvent);
+    this.apply(walletTransactionSignedEvent);
   }
 
-  static async Create(request: NewWalletDTO, walletService: WalletService): Promise<Wallet> {
+  static async create(request: NewWalletDTO, walletService: WalletService): Promise<Wallet> {
     const wallet = new Wallet();
     await wallet.checkRule(new WalletHolderAccountShouldBeVerified(request.ownerId, walletService));
     wallet.apply(new WalletCreatedEvent(request));
     return wallet;
   }
 
-  private $whenWalletCreated($event: WalletCreatedEvent) {
+  private $onWalletCreatedEvent($event: WalletCreatedEvent) {
     this.mapToProps($event.payload);
     if (this.props.type.equals(WalletType.Personal)) {
-      this.props.maxDailyCreditAmount = 100000;
-      this.props.maxDailyDebitAmount = 50000;
+      this.props.maxDailyCreditAmount = 100_000;
+      this.props.maxDailyDebitAmount = 50_000;
     } else {
-      this.props.maxDailyCreditAmount = 1000000;
-      this.props.maxDailyDebitAmount = 500000;
+      this.props.maxDailyCreditAmount = 1_000_000;
+      this.props.maxDailyDebitAmount = 500_000;
     }
   }
 
-  private $whenWalletDebitTxnCreatedEvent($event: WalletDebitTxnCreatedEvent) {
-    const transaction = WalletTransaction.Create($event.payload);
-    this.props.balance = this.props.balance.subtract($event.payload.amount);
-    this.props.transactions.push(transaction);
+  private $onWalletTxnCompletedEvent($event: WalletTxnCompletedEvent) {
+    const transaction = this.findTransaction($event.payload.transactionId);
+    transaction.complete();
   }
 
-  private $whenWalletCreditTxnCreatedEvent($event: WalletCreditTxnCreatedEvent) {
-    const transaction = WalletTransaction.Create($event.payload);
-    this.props.balance = this.props.balance.add($event.payload.amount);
+  private $onWalletTransactionSignedEvent($event: WalletTransactionSignedEvent) {
+    const transaction = this.findTransaction($event.payload.transactionId);
+    const holder = this.findHolder($event.payload.holderId);
+    transaction.addASignee(holder);
+  }
+
+  private $onWalletAuthTxnCreatedEvent($event: WalletAuthTxnCreatedEvent) {
+    const transaction = WalletTransaction.create($event.payload);
+    const newLienDTO = plainToClass(NewWalletLienDTO, {
+      walletId: this.ID.toString(),
+      txnId: transaction.ID.toString(),
+      amount: $event.payload.amount,
+      status: WalletLienStatus.Active.value,
+      expireAt: new Date(),
+    });
+    const lien = WalletLien.create(newLienDTO);
+    this.props.balance = this.props.balance.subtract($event.payload.amount);
     this.props.transactions.push(transaction);
+    this.props.liens.push(lien);
+  }
+
+  private $onWalletFinancialTxnCreatedEvent($event: WalletFinancialTxnCreatedEvent) {
+    const transaction = WalletTransaction.create($event.payload);
+    this.props.transactions.push(transaction);
+    if (transaction.action.IS_DEBIT) {
+      this.props.balance = this.props.balance.subtract($event.payload.amount);
+    } else {
+      this.props.balance = this.props.balance.add($event.payload.amount);
+    }
+  }
+
+  private $onWalletSettlementTxnCreatedEvent($event: WalletSettlementTxnCreatedEvent) {
+    const lien = this.props.liens.find(({ txnId }) => txnId.equals($event.payload.referenceTxnId));
+    const transaction = WalletTransaction.create($event.payload);
+    this.props.transactions.push(transaction);
+    lien.release($event.payload.amount, transaction.ID);
   }
 }

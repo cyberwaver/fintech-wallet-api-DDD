@@ -1,8 +1,8 @@
-import { BusinessRule } from "src/shared/domain/rule/BusinessRule";
-import { WalletTransaction } from "../WalletTransaction";
+import { BusinessRule } from 'src/common/domain/rule/BusinessRule';
+import { WalletTransaction } from '../WalletTransaction';
 
 export class TransactionShouldNotHaveBeenCompleted extends BusinessRule {
-  message = "Wallet transaction has been completed";
+  message = 'Wallet transaction has been completed';
   constructor(private transaction: WalletTransaction) {
     super();
   }

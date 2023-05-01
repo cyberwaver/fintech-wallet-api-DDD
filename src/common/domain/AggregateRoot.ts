@@ -1,10 +1,9 @@
-import { ClassConstructor, instanceToInstance } from "class-transformer";
-import { BusinessRuleViolationException } from "../exceptions/BusinessRuleViolationException";
-import { Entity } from "./Entity";
-import { DomainEvent } from "./event/DomainEvent";
-import { IDomainEvent } from "./event/IDomainEvent";
-import { IBusinessRule } from "./rule/IBusinessRule";
-import { UniqueEntityID } from "./UniqueEntityID";
+import { BusinessRuleViolationException } from '../exceptions/BusinessRuleViolationException';
+import { Entity } from './Entity';
+import { DomainEvent } from './event/DomainEvent';
+import { IDomainEvent } from './event/IDomainEvent';
+import { IBusinessRule } from './rule/IBusinessRule';
+import { UniqueEntityID } from './UniqueEntityID';
 
 export abstract class AggregateRoot<P extends { id: UniqueEntityID }> extends Entity<P> {
   private _domainEvents: IDomainEvent[] = [];
@@ -19,13 +18,12 @@ export abstract class AggregateRoot<P extends { id: UniqueEntityID }> extends En
     return this._domainEvents;
   }
 
-  protected addDomainEvent(domainEvent: IDomainEvent): void {
+  private addDomainEvent(domainEvent: IDomainEvent): void {
     this._domainEvents.push(domainEvent);
     this.logDomainEventAdded(domainEvent);
   }
 
   public apply(event: DomainEvent): void {
-    super.apply(event);
     this.addDomainEvent(event);
   }
 
@@ -39,13 +37,8 @@ export abstract class AggregateRoot<P extends { id: UniqueEntityID }> extends En
     console.info(
       `[Domain Event Created]:`,
       thisClass.constructor.name,
-      "==>",
+      '==>',
       domainEventClass.constructor.name,
     );
   }
 }
-
-const isClassConstructor =
-  (instanceOrClassConstructor: {}): instanceOrClassConstructor is ClassConstructor<{}> => {
-    return !(instanceOrClassConstructor instanceof AggregateRoot);
-  };
