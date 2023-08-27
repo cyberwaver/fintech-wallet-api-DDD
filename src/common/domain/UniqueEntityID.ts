@@ -1,9 +1,10 @@
-
 import shortUUID from 'short-uuid';
-import {Identifier} from './Identifier'
+import { Identifier } from './Identifier';
 
-export class UniqueEntityID extends Identifier<string | number>{
-  constructor (id?: string | number) {
-    super(id ? id : shortUUID.generate())
+export class UniqueEntityID extends Identifier<string | number> {
+  public isNew = false;
+  constructor(id?: string | number) {
+    super(id ? id : shortUUID.generate());
+    if (!id) this.isNew = true;
   }
 }

@@ -1,50 +1,51 @@
 import { Type } from 'class-transformer';
 import { Entity } from 'src/common/domain/Entity';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
-import { NewWalletTransactionDTO } from './DTOs/dtos.index';
-import { WalletHolder } from './WalletHolder';
-import { WalletTransactionSignee } from './WalletTransactionSignee';
+import { WalletId } from './WalletId';
+import { NewWalletTransactionDTO } from './dto/dtos.index';
 import { WalletTransactionStatus } from './WalletTransactionStatus';
 import { WalletTransactionAction } from './WalletTransactionAction';
+import { WalletTransactionClass } from './WalletTransactionClass';
 import { WalletTransactionType } from './WalletTransactionType';
+import { Amount } from 'src/common/domain/Amount';
 
 export class WalletTransactionProps {
   @Type(() => UniqueEntityID)
   id: UniqueEntityID;
-  walletId: string;
-  amount: number;
+  walletId: WalletId;
+  originalTxnId: UniqueEntityID;
+  @Type(() => Amount)
+  amount: Amount;
+  @Type(() => Amount)
+  amountCompleted: Amount;
+  @Type(() => WalletTransactionClass)
+  class: WalletTransactionClass;
   @Type(() => WalletTransactionType)
   type: WalletTransactionType;
   @Type(() => WalletTransactionStatus)
   status: WalletTransactionStatus;
   @Type(() => WalletTransactionAction)
   action: WalletTransactionAction;
-  @Type(() => WalletTransactionSignee)
-  signees: WalletTransactionSignee[];
+  @Type(() => Date)
+  completedAt: Date;
   @Type(() => Date)
   createdAt: Date;
+  meta: unknown;
 }
 
 export class WalletTransaction extends Entity<WalletTransactionProps> {
+  public readonly amount = this.props.amount;
   public readonly type = this.props.type;
   public readonly status = this.props.status;
   public readonly action = this.props.action;
-  public readonly SIGNEES_COUNT = this.props.signees.length;
 
   constructor(props?: WalletTransactionProps) {
     super(props);
   }
 
-  isASignee(holder: WalletHolder): boolean {
-    return this.props.signees.some((s) => s.value.holderId === holder.ID.toString());
-  }
-
-  addASignee(holder: WalletHolder): void {
-    this.props.signees.push(new WalletTransactionSignee({ holderId: holder.ID.toString() }));
-  }
-
   complete(): void {
     this.props.status = WalletTransactionStatus.Completed;
+    this.props.completedAt = new Date();
   }
 
   public static create(data: NewWalletTransactionDTO): WalletTransaction {

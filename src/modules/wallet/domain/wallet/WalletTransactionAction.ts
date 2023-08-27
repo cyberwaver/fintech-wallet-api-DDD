@@ -7,6 +7,9 @@ export class WalletTransactionAction extends ValueObject<string> {
 
   public readonly IS_DEBIT = this.equals(WalletTransactionAction.Debit);
   public readonly IS_CREDIT = this.equals(WalletTransactionAction.Credit);
+  public readonly INVERSE: WalletTransactionAction = this.IS_CREDIT
+    ? WalletTransactionAction.Debit
+    : WalletTransactionAction.Credit;
 
   public static readonly Debit = new WalletTransactionAction('DEBIT');
   public static readonly Credit = new WalletTransactionAction('CREDIT');

@@ -1,3 +1,4 @@
+import { Amount } from 'src/common/domain/Amount';
 import { BusinessRule } from 'src/common/domain/rule/BusinessRule';
 import { WalletBalance } from '../WalletBalance';
 import { WalletLien } from '../WalletLien';
@@ -5,7 +6,7 @@ import { WalletLien } from '../WalletLien';
 export class LienReleaseAmountShouldNotBeGreaterThanAvailableBalance extends BusinessRule {
   message = 'Insufficient funds to resolve settlement.';
   constructor(
-    private amount: number,
+    private amount: Amount,
     private lien: WalletLien,
     private walletBalance: WalletBalance,
   ) {
@@ -13,6 +14,6 @@ export class LienReleaseAmountShouldNotBeGreaterThanAvailableBalance extends Bus
   }
 
   public isBroken(): boolean {
-    return this.amount > this.walletBalance.value + this.lien.amount;
+    return this.amount.isGreaterThan(this.walletBalance.add(this.lien.amount));
   }
 }

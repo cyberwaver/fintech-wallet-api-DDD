@@ -6,8 +6,9 @@
 export class ValueObject<T> {
   public readonly value: T;
 
-  constructor(value: T) {
-    this.value = value;
+  constructor(value: T | unknown) {
+    if (value instanceof ValueObject) this.value = value.value;
+    else this.value = value as T;
   }
 
   public static isAny(

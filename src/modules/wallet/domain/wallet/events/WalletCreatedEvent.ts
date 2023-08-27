@@ -1,6 +1,6 @@
 import { DomainEvent } from 'src/common/domain/event/DomainEvent';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
-import { NewWalletDTO } from '../DTOs/dtos.index';
+import { NewWalletDTO } from '../dto/dtos.index';
 
 export class WalletCreatedEvent extends DomainEvent {
   public payload: WalletCreatedEventPayload;

@@ -1,15 +1,12 @@
 import { DomainEvent } from 'src/common/domain/event/DomainEvent';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
-import { NewWalletTransactionDTO } from '../DTOs/dtos.index';
+import { NewWalletTransactionDTO } from '../dto/dtos.index';
+import { WalletId } from '../WalletId';
 
 export class WalletReversalTxnCreatedEvent extends DomainEvent {
-  public payload: WalletReversalTxnCreatedEventPayload;
-  constructor(data: NewWalletTransactionDTO, transactionId: UniqueEntityID = new UniqueEntityID()) {
-    super(data.walletId);
-    this.payload = { ...data, transactionId: transactionId.toString() };
+  public payload: NewWalletTransactionDTO & { transactionId: UniqueEntityID; walletId: WalletId };
+  constructor(data: NewWalletTransactionDTO, transactionId: UniqueEntityID, walletId: WalletId) {
+    super(walletId);
+    this.payload = { ...data, walletId, transactionId };
   }
-}
-
-class WalletReversalTxnCreatedEventPayload extends NewWalletTransactionDTO {
-  transactionId: string;
 }

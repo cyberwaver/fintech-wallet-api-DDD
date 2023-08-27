@@ -1,5 +1,5 @@
 class Result<T, E = Error> {
-  constructor(public isSuccess: boolean, public _error: E, public _value: T) {
+  constructor(private isSuccess: boolean, private _error: E, private _value: T) {
     if (isSuccess && _error) {
       throw new Error('InvalidOperation: A result cannot be successful and contain an error');
     }
@@ -7,6 +7,14 @@ class Result<T, E = Error> {
       throw new Error('InvalidOperation: A failing result needs to contain an error message');
     }
     Object.freeze(this);
+  }
+
+  get IS_SUCCESS(): boolean {
+    return this.isSuccess;
+  }
+
+  get IS_FAILURE(): boolean {
+    return !this.isSuccess;
   }
 
   get value(): T {
@@ -21,7 +29,7 @@ class Result<T, E = Error> {
     return this.error;
   }
 
-  static ok<T>(value: T): Result<T, null> {
+  static ok<T>(value?: T): Result<T, null> {
     return new Result(true, null, value);
   }
 
