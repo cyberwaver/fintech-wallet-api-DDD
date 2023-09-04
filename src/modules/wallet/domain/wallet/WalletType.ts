@@ -2,7 +2,7 @@ import { ValueObject } from 'src/common/domain/ValueObject';
 
 export class WalletType extends ValueObject<string> {
   constructor(value: string) {
-    super(value.toUpperCase());
+    super(typeof value == 'string' ? value.toUpperCase() : value);
   }
 
   public readonly IS_PERSONAL = this.equals(WalletType.Personal);

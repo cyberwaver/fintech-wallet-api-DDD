@@ -17,15 +17,19 @@ export class RequestWalletControlTransferCommandHandler extends CommandHandlerBa
     super();
   }
 
-  protected async executeImpl(
-    command: RequestWalletControlTransferCommand,
-  ): Promise<Result<UniqueEntityID>> {
+  protected async executeImpl(command: RequestWalletControlTransferCommand): Promise<Result<UniqueEntityID>> {
     const request = plainToClass(NewWalletAssetTransferDTO, command);
     request.type = WalletAssetType.Control;
     request.destinationId = new UniqueEntityID(command.toHolderId);
-    const wallet = await this.walletsRepo.findById(command.walletId);
-    const transferId = await wallet.requestAssetTransfer(request);
+
+    const walletResult = await this.walletsRepo.findById(command.walletId);
+    if (walletResult.IS_FAILURE) return Result.fail(walletResult.error);
+    const wallet = walletResult.value;
+
+    const result = await Result.resolve(wallet.requestAssetTransfer(request));
+    if (result.IS_FAILURE) return Result.fail(result.error);
+
     await this.repoManager.save(wallet);
-    return Result.ok(transferId);
+    return Result.ok(result.value);
   }
 }

@@ -1,13 +1,15 @@
-import { UniqueEntityID } from "../UniqueEntityID";
-import { IDomainEvent } from "./IDomainEvent";
+import { UniqueEntityID } from '../UniqueEntityID';
+import { IDomainEvent } from './IDomainEvent';
 
 export abstract class DomainEvent implements IDomainEvent {
+  public name: string;
   public occurredOn: Date = new Date();
   private _id: UniqueEntityID;
   public abstract payload;
-  public initiator: object;
+  public initiator: Record<string, unknown>;
   constructor(id: string | UniqueEntityID) {
-    this._id = typeof id === "string" ? new UniqueEntityID(id) : id;
+    this._id = typeof id === 'string' ? new UniqueEntityID(id) : id;
+    this.name = this.constructor.name;
   }
 
   public get aggregateId(): UniqueEntityID {

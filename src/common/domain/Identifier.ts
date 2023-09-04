@@ -11,7 +11,11 @@ export class Identifier<T> {
     return String(this.value);
   }
 
-  value(): T {
+  get value(): T {
     return this._value;
+  }
+
+  toJSON() {
+    return this.value;
   }
 }

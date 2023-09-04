@@ -11,6 +11,13 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["@types/jest"],
+    "paths": {
+      "@Common/*": ["src/common/*"],
+      "@Wallet/*": ["src/modules/wallet/*"],
+      "@Access/*": ["src/modules/access/*"],
+      "@KMS/*": ["src/modules/kms/*"]
+    }
   }
 }

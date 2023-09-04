@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import { IsNotEmpty } from 'class-validator';
+import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
 import { WalletType } from '../WalletType';
 
 export class NewWalletDTO {
@@ -7,7 +8,8 @@ export class NewWalletDTO {
   name: string;
 
   @IsNotEmpty()
-  ownerId: string;
+  @Type(() => UniqueEntityID)
+  initiatorId: UniqueEntityID;
 
   @IsNotEmpty()
   @Type(() => WalletType)

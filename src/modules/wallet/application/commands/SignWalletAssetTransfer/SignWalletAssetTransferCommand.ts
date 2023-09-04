@@ -1,12 +1,12 @@
 import { IsNotEmpty } from 'class-validator';
 
-export class NewWalletLienDTO {
+export class SignWalletAssetTransferCommand {
   @IsNotEmpty()
   walletId: string;
+
   @IsNotEmpty()
-  txnId: string;
-  status: string;
+  transferId: string;
+
   @IsNotEmpty()
-  amount: number;
-  toExpireAt: Date;
+  initiatorId: string;
 }

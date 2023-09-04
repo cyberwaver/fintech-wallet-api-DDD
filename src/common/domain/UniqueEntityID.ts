@@ -1,4 +1,4 @@
-import shortUUID from 'short-uuid';
+import * as shortUUID from 'short-uuid';
 import { Identifier } from './Identifier';
 
 export class UniqueEntityID extends Identifier<string | number> {

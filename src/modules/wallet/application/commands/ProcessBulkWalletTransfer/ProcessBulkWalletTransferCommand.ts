@@ -6,9 +6,6 @@ export class ProcessBulkWalletTransferCommand {
   walletId: string;
 
   @IsNotEmpty()
-  holderId: string;
-
-  @IsNotEmpty()
   originalTxnId: string;
 
   @IsNotEmpty()

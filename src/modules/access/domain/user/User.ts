@@ -1,11 +1,7 @@
 import { Type } from 'class-transformer';
 import { AggregateRoot } from 'src/common/domain/AggregateRoot';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
-import {
-  NewUserDTO,
-  UserOnboardingRuleValidatedDTO,
-  UserOnboardingUpdateDTO,
-} from './dto/dtos.index';
+import { NewUserDTO, UserOnboardingRuleValidatedDTO, UserOnboardingUpdateDTO } from './dto/dtos.index';
 import {
   UserActivatedEvent,
   UserCreatedEvent,
@@ -55,6 +51,10 @@ export class User extends AggregateRoot<UserProps> {
     super(props);
   }
 
+  public get status(): UserStatus {
+    return this.props.status;
+  }
+
   public async activate(): Promise<void> {
     await this.checkRule(new UserShouldBeInactive(this.props.status));
     this.apply(new UserActivatedEvent(this.ID));
@@ -75,9 +75,7 @@ export class User extends AggregateRoot<UserProps> {
     this.apply(new UserOnboardingCompletionInitiatedEvent(this.ID));
   }
 
-  public async recordOnboardingRuleValidation(
-    request: UserOnboardingRuleValidatedDTO,
-  ): Promise<void> {
+  public async recordOnboardingRuleValidation(request: UserOnboardingRuleValidatedDTO): Promise<void> {
     await this.checkRule(new UserOnboardingShouldBeValidating(this.props.status));
     this.apply(new UserOnboardingRuleValidationRecordedEvent(request, this.ID));
     if (!request.passed) this.apply(new UserOnboardingValidationFailedEvent(this.ID));
@@ -112,12 +110,8 @@ export class User extends AggregateRoot<UserProps> {
     this.props.validationRules.push(ValidationRule.CheckDefaultBankAccount);
   }
 
-  private $onUserOnboardingRuleValidationRecordedEvent(
-    $event: UserOnboardingRuleValidationRecordedEvent,
-  ) {
-    const rule = this.props.validationRules.find(
-      (rule) => rule.value.label == $event.payload.label,
-    );
+  private $onUserOnboardingRuleValidationRecordedEvent($event: UserOnboardingRuleValidationRecordedEvent) {
+    const rule = this.props.validationRules.find((rule) => rule.value.label == $event.payload.label);
     if (!rule) return;
     this.props.validationRules = this.props.validationRules.filter(
       (rule) => rule.value.label !== $event.payload.label,

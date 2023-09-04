@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { Amount } from 'src/common/domain/Amount';
 import { Entity } from 'src/common/domain/Entity';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
@@ -6,14 +6,15 @@ import { NewWalletHolderDTO } from './dto/dtos.index';
 import { WalletHolderStatus } from './WalletHolderStatus';
 import { WalletId } from './WalletId';
 
-class WalletHolderProps {
+export class WalletHolderProps {
   @Type(() => UniqueEntityID)
+  @Expose()
   id: UniqueEntityID;
 
   @Type(() => WalletId)
   walletId: WalletId;
 
-  accountId: string;
+  accountId: UniqueEntityID;
 
   @Type(() => WalletHolderStatus)
   status: WalletHolderStatus;
@@ -59,8 +60,11 @@ export class WalletHolder extends Entity<WalletHolderProps> {
   }
 
   public static create(data: NewWalletHolderDTO): WalletHolder {
-    const holder = new WalletHolder();
-    holder.mapToProps({ ...data, createdAt: new Date() });
+    const props = new WalletHolderProps();
+    props.id = new UniqueEntityID();
+    props.walletId = data.walletId;
+    props.accountId = data.accountId;
+    const holder = new WalletHolder(props);
     return holder;
   }
 }

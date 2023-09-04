@@ -1,6 +1,7 @@
 import { CommandHandler } from '@nestjs/cqrs';
 import { plainToClass } from 'class-transformer';
 import { CommandHandlerBase } from 'src/common/application/CommandHandlerBase';
+import { Amount } from 'src/common/domain/Amount';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
 import { IRepositoryManager } from 'src/common/infrastructure/IRepositoryManager';
 import { IWalletTemplatesRepository } from 'src/modules/wallet/domain/wallet-template/IWalletTemplatesRepository';
@@ -29,11 +30,18 @@ export class RequestBulkWalletTransferCommandHandler extends CommandHandlerBase<
     const request = plainToClass(NewWalletTransactionDTO, command);
     request.class = WalletTransactionClass.Auth;
     request.type = WalletTransactionType.TransferFrom;
-    request.amount = command.payees.reduce((sum, p) => sum + p.amount, 0);
+    request.amount = Amount.create(command.payees.reduce((sum, p) => sum + p.amount, 0));
 
-    const wallet = await this.walletsRepo.findByIdWithHolder(command.walletId, command.holderId);
-    const template = await this.walletTemplatesRepo.findById(wallet.templateId);
-    await wallet.handleTransactionRequest(request, template, this.walletService);
+    const walletResult = await this.walletsRepo.findByIdWithHolder(command.walletId, command.holderId);
+    if (walletResult.IS_FAILURE) return Result.fail(walletResult.error);
+    const wallet = walletResult.value;
+
+    const templateResult = await this.walletTemplatesRepo.findById(wallet.templateId);
+    if (templateResult.IS_FAILURE) return Result.fail(templateResult.error);
+    const template = templateResult.value;
+
+    const result = await Result.resolve(wallet.handleTransactionRequest(request, template));
+    if (result.IS_FAILURE) return Result.fail(result.error);
 
     await this.repoManager.save(wallet);
     return Result.ok();

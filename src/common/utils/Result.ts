@@ -1,4 +1,4 @@
-class Result<T, E = Error> {
+export class Result<T, E = Error> {
   constructor(private isSuccess: boolean, private _error: E, private _value: T) {
     if (isSuccess && _error) {
       throw new Error('InvalidOperation: A result cannot be successful and contain an error');
@@ -26,7 +26,7 @@ class Result<T, E = Error> {
   }
 
   get error(): E {
-    return this.error;
+    return this._error;
   }
 
   static ok<T>(value?: T): Result<T, null> {
@@ -42,6 +42,7 @@ class Result<T, E = Error> {
       const res = await Promise.resolve(task);
       return Result.ok(res);
     } catch (err) {
+      // console.log('******************************* RESULT__ERROR **** ', err);
       return Result.fail(err);
     }
   }
@@ -58,12 +59,10 @@ class Result<T, E = Error> {
     }
   }
 
-  public static combine(results: Result<any>[]): Result<null> {
+  public static combine(...results: Result<any>[]): Result<null> {
     for (const result of results) {
       if (!result.isSuccess) return Result.fail(result.error);
     }
     return Result.ok(null);
   }
 }
-
-module.exports = { Result };

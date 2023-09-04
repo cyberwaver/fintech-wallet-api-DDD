@@ -26,6 +26,7 @@ export class WalletTransactionProps {
   status: WalletTransactionStatus;
   @Type(() => WalletTransactionAction)
   action: WalletTransactionAction;
+  description: string;
   @Type(() => Date)
   completedAt: Date;
   @Type(() => Date)
@@ -48,9 +49,17 @@ export class WalletTransaction extends Entity<WalletTransactionProps> {
     this.props.completedAt = new Date();
   }
 
-  public static create(data: NewWalletTransactionDTO): WalletTransaction {
-    const transaction = new WalletTransaction();
-    transaction.mapToProps(data);
-    return transaction;
+  public static create(data: NewWalletTransactionDTO, walletId: WalletId): WalletTransaction {
+    const props = new WalletTransactionProps();
+    props.id = new UniqueEntityID();
+    props.walletId = walletId;
+    props.class = data.class;
+    props.type = data.type;
+    props.action = data.type.action;
+    props.amount = data.amount;
+    props.description = data.description;
+    props.originalTxnId = data.originalTxnId;
+
+    return new WalletTransaction(props);
   }
 }

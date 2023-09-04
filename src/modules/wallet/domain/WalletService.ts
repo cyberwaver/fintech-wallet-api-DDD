@@ -1,7 +1,10 @@
-export class WalletService {
-  constructor() {}
+import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
+import { UserService } from 'src/modules/access/domain/user/UserService';
 
-  async isUserAccountVerified(accountId: string): Promise<boolean> {
-    return true;
+export class WalletService {
+  constructor(private userService: UserService) {}
+
+  async isUserVerified(accountId: UniqueEntityID): Promise<boolean> {
+    return this.userService.isAccountVerified(accountId);
   }
 }

@@ -7,6 +7,7 @@ import { NewWalletAssetTransferDTO } from './dto/dtos.index';
 import { WalletAssetTransferStatus } from './WalletAssetTransferStatus';
 import { WalletAssetType } from './WalletAssetType';
 import { WalletHolder } from './WalletHolder';
+import { WalletId } from './WalletId';
 import { WalletSignee } from './WalletSignee';
 
 class WalletAssetTransferProps {
@@ -78,17 +79,23 @@ export class WalletAssetTransfer extends Entity<WalletAssetTransferProps> {
 
   public complete(): void {
     this.props.status = WalletAssetTransferStatus.Completed;
-    this.props.completedAt = DateTime.fromJSDate(new Date());
+    this.props.completedAt = DateTime.now();
   }
 
-  public static create(data: NewWalletAssetTransferDTO, id?: UniqueEntityID): WalletAssetTransfer {
-    const transfer = new WalletAssetTransfer();
-    transfer.mapToProps({
-      ...data,
-      id,
-      status: WalletAssetTransferStatus.Pending,
-      createdAt: new Date(),
-    });
-    return transfer;
+  public static create(
+    data: NewWalletAssetTransferDTO,
+    walletId: WalletId,
+    id = new UniqueEntityID(),
+  ): WalletAssetTransfer {
+    const props = new WalletAssetTransferProps();
+    props.id = id;
+    props.walletId = walletId;
+    props.type = data.type;
+    props.value = data.amount;
+    props.sourceId = data.sourceId;
+    props.destinationId = data.destinationId;
+    props.createdAt = DateTime.now();
+
+    return new WalletAssetTransfer(props);
   }
 }

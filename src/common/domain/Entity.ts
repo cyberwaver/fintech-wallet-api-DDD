@@ -6,7 +6,7 @@ export abstract class Entity<P extends { id: UniqueEntityID }> {
   protected props: P;
 
   constructor(props?: P) {
-    this.props = Object.create(props);
+    this.props = Object.create(props ?? {});
   }
 
   get ID(): UniqueEntityID {
@@ -27,7 +27,7 @@ export abstract class Entity<P extends { id: UniqueEntityID }> {
     return this.id.equals(object.id);
   }
 
-  protected mapToProps<T extends unknown>(dto: T): void {
-    this.props = plainToClassFromExist(this.props, dto);
+  public toJSON(): string {
+    return JSON.parse(JSON.stringify(this.props));
   }
 }

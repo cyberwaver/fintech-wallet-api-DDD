@@ -11,11 +11,8 @@ export class ValueObject<T> {
     else this.value = value as T;
   }
 
-  public static isAny(
-    checkValue: ValueObject<unknown>,
-    ...values: ValueObject<unknown>[]
-  ): boolean {
-    return values.some((v) => v.equals(checkValue));
+  public static isAny(checkValue: ValueObject<unknown>, ...values: ValueObject<unknown>[]): boolean {
+    return values.some((v) => checkValue.equals(v));
   }
 
   public isAny(...values: ValueObject<T>[]): boolean {
@@ -27,5 +24,9 @@ export class ValueObject<T> {
     // let val = value;
     // if(value instanceof ValueObject) val = value.value;
     return JSON.stringify(this.value) === JSON.stringify(value);
+  }
+
+  public toJSON(): unknown {
+    return this.value;
   }
 }
