@@ -3,7 +3,7 @@ import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
 import { NewWalletTransactionDTO } from '../dto/dtos.index';
 import { WalletId } from '../WalletId';
 
-export class WalletAuthFinancialTxnCreatedEvent extends DomainEvent {
+export class WalletFinancialAdvTxnCreatedEvent extends DomainEvent {
   public payload: NewWalletTransactionDTO & { transactionId: UniqueEntityID; walletId: WalletId };
   constructor(data: NewWalletTransactionDTO, transactionId: UniqueEntityID, walletId: WalletId) {
     super(walletId);
