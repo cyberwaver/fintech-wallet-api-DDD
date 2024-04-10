@@ -31,6 +31,7 @@ export class UserProps {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string;
   @Type(() => UserStatus)
   status: UserStatus;
   bvn: string;
@@ -101,7 +102,11 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   private $onUserOnboardingUpdatedEvent($event: UserOnboardingUpdatedEvent) {
-    this.mapToProps($event.payload);
+    this.props.firstName = $event.payload.firstName;
+    this.props.lastName = $event.payload.lastName;
+    this.props.phone = $event.payload.phone;
+    this.props.bvn = $event.payload.bvn;
+    this.props.address = new Address($event.payload.address);
   }
 
   private $onUserOnboardingCompletionInitiatedEvent() {
@@ -129,7 +134,11 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   private $onUserCreatedEvent($event: UserCreatedEvent) {
-    this.mapToProps($event.payload);
+    this.props.id = $event.payload.id;
+    this.props.email = $event.payload.email;
+    this.props.firstName = $event.payload.firstName;
+    this.props.lastName = $event.payload.lastName;
+    this.props.authId = new UniqueEntityID($event.payload.authId);
     this.props.status = UserStatus.Pending;
     this.props.createdAt = $event.payload.createdAt;
   }

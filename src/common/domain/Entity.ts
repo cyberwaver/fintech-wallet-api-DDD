@@ -1,4 +1,3 @@
-import { plainToClassFromExist } from 'class-transformer';
 import { UniqueEntityID } from './UniqueEntityID';
 
 export abstract class Entity<P extends { id: UniqueEntityID }> {

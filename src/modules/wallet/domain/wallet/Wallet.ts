@@ -208,7 +208,6 @@ export class Wallet extends AggregateRoot<WalletProps> {
     this.checkRule(new AssetTransferShouldBePending(transfer));
     this.checkRule(new AssetTransferSigneeShouldBeUnique(transfer, holder));
     this.apply(new WalletAssetTransferSignedEvent(transferId, holderId, this.ID));
-    if (transfer.STAKE_THRESHOLD_REACHED) await this.completeAssetTransfer(transfer.ID);
   }
 
   public async completeAssetTransfer(transferId: UniqueEntityID): Promise<void> {
@@ -216,14 +215,6 @@ export class Wallet extends AggregateRoot<WalletProps> {
     this.checkRule(new AssetTransferShouldBePending(transfer));
     this.checkRule(new AssetTransferShouldHaveReachedSetThreshold(transfer));
     this.apply(new WalletAssetTransferCompletedEvent(transferId, this.ID));
-  }
-
-  public async removeHold(holdId: UniqueEntityID) {
-    const hold = this.find(this.props.holds, holdId);
-    this.props.holdBalance = this.props.holdBalance.subtract(hold.balance);
-    this.props.balance = this.props.balance.add(hold.balance);
-    this.props.availableBalance = this.props.ledgerBalance.add(hold.balance);
-    hold.remove();
   }
 
   static async create(request: NewWalletDTO, walletService: WalletService): Promise<Wallet> {
@@ -353,34 +344,46 @@ export class Wallet extends AggregateRoot<WalletProps> {
 
   private $onWalletAuthTxnCreatedEvent($event: WalletAuthTxnCreatedEvent) {
     const transaction = WalletTransaction.create($event.payload, this.ID);
-    const newHoldDTO = plainToClass(NewWalletAuthHoldDTO, {
-      walletId: this.ID.toString(),
-      txnId: transaction.ID.toString(),
-      amount: $event.payload.amount,
-      status: WalletAuthHoldStatus.Pending.value,
-      expireAt: new Date(),
-    });
-    const hold = WalletAuthHold.create(newHoldDTO, this.ID);
-    this.props.balance = this.props.balance.subtract(new Amount($event.payload.amount));
+    const holdData = new NewWalletAuthHoldDTO();
+    holdData.authTxnId = transaction.ID;
+    holdData.amount = $event.payload.amount;
+    holdData.period = 30;
+    const hold = WalletAuthHold.create(holdData, this.ID);
+    this.props.holdBalance = this.props.holdBalance.add($event.payload.amount);
+    this.props.balance = this.props.balance.subtract($event.payload.amount);
     this.props.transactions.push(transaction);
     this.props.holds.push(hold);
   }
 
+  private $onWalletAuthAdvTxnCreatedEvent($event: WalletAuthAdvTxnCreatedEvent) {
+    const transaction = WalletTransaction.create($event.payload, this.ID);
+    const hold = this.find(this.props.holds, $event.payload.originalTxnId);
+    this.props.holdBalance = this.props.holdBalance.subtract(hold.balance);
+    this.props.balance = this.props.balance.add(hold.balance);
+    this.props.availableBalance = this.props.ledgerBalance.add(hold.balance);
+    hold.remove();
+    this.props.transactions.push(transaction);
+  }
+
   private $onWalletFinancialTxnCreatedEvent($event: WalletFinancialTxnCreatedEvent) {
     const transaction = WalletTransaction.create($event.payload, this.ID);
-    this.props.transactions.push(transaction);
     if (transaction.action.IS_DEBIT) {
-      this.props.balance = this.props.balance.subtract(new Amount($event.payload.amount));
+      this.props.balance = this.props.balance.subtract($event.payload.amount);
+      this.props.availableBalance = this.props.availableBalance.subtract($event.payload.amount);
+      this.props.ledgerBalance = this.props.ledgerBalance.subtract($event.payload.amount);
     } else {
-      this.props.balance = this.props.balance.add(new Amount($event.payload.amount));
+      this.props.balance = this.props.balance.add($event.payload.amount);
+      this.props.availableBalance = this.props.availableBalance.add($event.payload.amount);
+      this.props.ledgerBalance = this.props.ledgerBalance.add($event.payload.amount);
     }
+    this.props.transactions.push(transaction);
   }
 
   private $onWalletFinancialAdvTxnCreatedEvent($event: WalletFinancialAdvTxnCreatedEvent) {
     const hold = this.find(this.props.holds, $event.payload.originalTxnId);
     const transaction = WalletTransaction.create($event.payload, this.ID);
     this.props.transactions.push(transaction);
-    hold.release(new Amount($event.payload.amount));
+    hold.release($event.payload.amount);
   }
 
   private $onWalletReversalTxnCreatedEvent($event: WalletReversalTxnCreatedEvent) {

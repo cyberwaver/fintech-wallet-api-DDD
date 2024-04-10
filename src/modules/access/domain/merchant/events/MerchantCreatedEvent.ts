@@ -1,11 +1,11 @@
 import { DomainEvent } from 'src/common/domain/event/DomainEvent';
-import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
 import { NewMerchantDTO } from '../dto/dtos.index';
+import { MerchantId } from '../MerchantId';
 
 export class MerchantCreatedEvent extends DomainEvent {
-  public payload: NewMerchantDTO & { merchantId: UniqueEntityID; createdAt: Date };
-  constructor(data: NewMerchantDTO, merchantId: UniqueEntityID = new UniqueEntityID()) {
-    super(merchantId);
-    this.payload = { ...data, merchantId, createdAt: new Date() };
+  public payload: NewMerchantDTO & { id: MerchantId; createdAt: Date };
+  constructor(data: NewMerchantDTO, id = new MerchantId()) {
+    super(id);
+    this.payload = { ...data, id, createdAt: new Date() };
   }
 }

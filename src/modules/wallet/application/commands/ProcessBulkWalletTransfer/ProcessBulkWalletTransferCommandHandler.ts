@@ -2,7 +2,7 @@ import { CommandHandler } from '@nestjs/cqrs';
 import { CommandHandlerBase } from 'src/common/application/CommandHandlerBase';
 import { Amount } from 'src/common/domain/Amount';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
-import { IRepositoryManager } from 'src/common/infrastructure/IRepositoryManager';
+import { IPersistenceManager } from '@Common/infrastructure/IPersistenceManager';
 import { IWalletTemplatesRepository } from 'src/modules/wallet/domain/wallet-template/IWalletTemplatesRepository';
 import { NewWalletTransactionDTO } from 'src/modules/wallet/domain/wallet/dto/NewWalletTransactionDTO';
 import { IWalletsRepository } from 'src/modules/wallet/domain/wallet/IWalletsRepository';
@@ -18,7 +18,7 @@ export class ProcessBulkWalletTransferCommandHandler extends CommandHandlerBase<
   constructor(
     private walletsRepo: IWalletsRepository,
     private walletTemplatesRepo: IWalletTemplatesRepository,
-    private repoManager: IRepositoryManager,
+    private persistence: IPersistenceManager,
   ) {
     super();
   }
@@ -76,7 +76,7 @@ export class ProcessBulkWalletTransferCommandHandler extends CommandHandlerBase<
     );
     if (completionResult.IS_FAILURE) return Result.fail(completionResult.error);
 
-    await this.repoManager.save(payerWallet, ...wallets);
+    await this.persistence.flush(payerWallet, ...wallets);
     return Result.ok();
   }
 }

@@ -1,6 +1,7 @@
+import { ICommand } from '@nestjs/cqrs';
 import { IsEmail, IsIn, IsNotEmpty, Min } from 'class-validator';
 
-export class CreateAuthenticationCommand {
+export class CreateAuthenticationCommand implements ICommand {
   @IsNotEmpty()
   @IsIn(['USER', 'INSTITUTION'])
   type: string;

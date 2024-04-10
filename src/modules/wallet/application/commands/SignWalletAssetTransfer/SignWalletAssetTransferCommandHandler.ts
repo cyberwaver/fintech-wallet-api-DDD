@@ -1,7 +1,8 @@
+import { Result } from '@Common/utils/Result';
 import { CommandHandler } from '@nestjs/cqrs';
 import { CommandHandlerBase } from 'src/common/application/CommandHandlerBase';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
-import { IRepositoryManager } from 'src/common/infrastructure/IRepositoryManager';
+import { IPersistenceManager } from '@Common/infrastructure/IPersistenceManager';
 import { IWalletsRepository } from 'src/modules/wallet/domain/wallet/IWalletsRepository';
 import { SignWalletAssetTransferCommand } from './SignWalletAssetTransferCommand';
 
@@ -10,7 +11,7 @@ export class SignWalletAssetTransferCommandHandler extends CommandHandlerBase<
   SignWalletAssetTransferCommand,
   UniqueEntityID
 > {
-  constructor(private walletsRepo: IWalletsRepository, private repoManager: IRepositoryManager) {
+  constructor(private walletsRepo: IWalletsRepository, private persistence: IPersistenceManager) {
     super();
   }
 
@@ -31,7 +32,9 @@ export class SignWalletAssetTransferCommandHandler extends CommandHandlerBase<
     );
     if (result.IS_FAILURE) return Result.fail(result.error);
 
-    await this.repoManager.save(wallet);
+    await Result.resolve(wallet.completeAssetTransfer(new UniqueEntityID(command.transferId)));
+
+    await this.persistence.flush(wallet);
     return Result.ok();
   }
 }

@@ -1,3 +1,4 @@
+import { Result } from '@Common/utils/Result';
 import { IRepository } from 'src/common/domain/IRepository';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
 import { Wallet } from './Wallet';

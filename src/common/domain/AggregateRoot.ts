@@ -9,6 +9,10 @@ import { UniqueEntityID } from './UniqueEntityID';
 export abstract class AggregateRoot<P extends { id: UniqueEntityID }> extends Entity<P> {
   private _domainEvents: IDomainEvent[] = [];
 
+  get name(): string {
+    return this.constructor.name;
+  }
+
   checkRule(rule: IBusinessRule): void | Promise<void> {
     const isBroken = rule.isBroken();
     if (isBroken instanceof Promise) return this.resolveAsyncBusinessRule(isBroken, rule);

@@ -1,11 +1,7 @@
-import { IPspModule } from './modules/IPspModule';
+import { IPspModule } from './IPspModule';
 
 export interface IPspService {
-  getAccountDetails(
-    accountNo: string,
-    bank: string,
-    provider?: IPspModule,
-  ): Promise<AccountDetails>;
+  getAccountDetails(accountNo: string, bank: string, provider?: IPspModule): Promise<AccountDetails>;
   getBVNDetails(bvn: string, provider?: IPspModule): Promise<BVNDetails>;
 }
 

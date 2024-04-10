@@ -15,9 +15,10 @@ import {
   MerchantShouldBeInactive,
   MerchantShouldBePendingOnboarding,
 } from './rules/rules.index';
+import { MerchantId } from './MerchantId';
 
 export class MerchantProps {
-  id: UniqueEntityID;
+  id: MerchantId;
   authId: UniqueEntityID;
   name: string;
   email: string;
@@ -25,6 +26,7 @@ export class MerchantProps {
   status: MerchantStatus;
   abbr: string;
   keyPrefix: string;
+  currencyCode: string;
   logoUploadId: string;
   logoUploadURL: string;
   onboardedAt: Date;
@@ -51,10 +53,7 @@ export class Merchant extends AggregateRoot<MerchantProps> {
     this.apply(new MerchantOnboardingCompletedEvent(this.ID));
   }
 
-  public static async create(
-    request: NewMerchantDTO,
-    merchantService: MerchantService,
-  ): Promise<Merchant> {
+  public static async create(request: NewMerchantDTO, merchantService: MerchantService): Promise<Merchant> {
     const merchant = new Merchant();
     request.keyPrefix = await merchantService.deriveUniqueKeyPrefix(request.abbr, request.name);
     merchant.apply(new MerchantCreatedEvent(request));
@@ -75,7 +74,11 @@ export class Merchant extends AggregateRoot<MerchantProps> {
   }
 
   private $onMerchantCreatedEvent($event: MerchantCreatedEvent) {
-    this.mapToProps($event.payload);
+    this.props.id = $event.payload.id;
+    this.props.name = $event.payload.name;
+    this.props.authId = new UniqueEntityID($event.payload.authId);
+    this.props.email = $event.payload.email;
+    this.props.currencyCode = $event.payload.currencyCode;
     this.props.status = MerchantStatus.Pending;
     this.props.createdAt = $event.payload.createdAt;
   }

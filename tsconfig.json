@@ -13,11 +13,14 @@
     "incremental": true,
     "skipLibCheck": true,
     "types": ["@types/jest"],
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "paths": {
       "@Common/*": ["src/common/*"],
       "@Wallet/*": ["src/modules/wallet/*"],
       "@Access/*": ["src/modules/access/*"],
-      "@KMS/*": ["src/modules/kms/*"]
+      "@KMS/*": ["src/modules/kms/*"],
+      "@SharedKernel/*": ["src/modules/shared-kernel/*"]
     }
   }
 }

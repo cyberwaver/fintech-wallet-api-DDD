@@ -2,7 +2,7 @@ import { CommandHandler } from '@nestjs/cqrs';
 import { plainToClass } from 'class-transformer';
 import { CommandHandlerBase } from 'src/common/application/CommandHandlerBase';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
-import { IRepositoryManager } from 'src/common/infrastructure/IRepositoryManager';
+import { IPersistenceManager } from '@Common/infrastructure/IPersistenceManager';
 import { IWalletTemplatesRepository } from 'src/modules/wallet/domain/wallet-template/IWalletTemplatesRepository';
 import { NewWalletTransactionDTO } from 'src/modules/wallet/domain/wallet/dto/NewWalletTransactionDTO';
 import { IWalletsRepository } from 'src/modules/wallet/domain/wallet/IWalletsRepository';
@@ -20,7 +20,7 @@ export class CreateWalletDepositTransactionCommandHandler extends CommandHandler
     private walletService: WalletService,
     private walletsRepo: IWalletsRepository,
     private walletTemplatesRepo: IWalletTemplatesRepository,
-    private repoManager: IRepositoryManager,
+    private persistence: IPersistenceManager,
   ) {
     super();
   }
@@ -34,7 +34,7 @@ export class CreateWalletDepositTransactionCommandHandler extends CommandHandler
     const wallet = await this.walletsRepo.findById(dto.walletId);
     const template = await this.walletTemplatesRepo.findById(wallet.templateId);
     const txnId = await wallet.handleTransactionRequest(dto, template, this.walletService);
-    await this.repoManager.save(wallet);
+    await this.persistence.flush(wallet);
     return Result.ok(txnId);
   }
 }

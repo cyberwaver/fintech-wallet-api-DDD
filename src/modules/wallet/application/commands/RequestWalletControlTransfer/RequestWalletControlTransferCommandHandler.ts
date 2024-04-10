@@ -2,7 +2,7 @@ import { CommandHandler } from '@nestjs/cqrs';
 import { plainToClass } from 'class-transformer';
 import { CommandHandlerBase } from 'src/common/application/CommandHandlerBase';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
-import { IRepositoryManager } from 'src/common/infrastructure/IRepositoryManager';
+import { IPersistenceManager } from '@Common/infrastructure/IPersistenceManager';
 import { NewWalletAssetTransferDTO } from 'src/modules/wallet/domain/wallet/dto/NewWalletAssetTransferDTO';
 import { IWalletsRepository } from 'src/modules/wallet/domain/wallet/IWalletsRepository';
 import { WalletAssetType } from 'src/modules/wallet/domain/wallet/WalletAssetType';
@@ -13,7 +13,7 @@ export class RequestWalletControlTransferCommandHandler extends CommandHandlerBa
   RequestWalletControlTransferCommand,
   UniqueEntityID
 > {
-  constructor(private walletsRepo: IWalletsRepository, private repoManager: IRepositoryManager) {
+  constructor(private walletsRepo: IWalletsRepository, private persistence: IPersistenceManager) {
     super();
   }
 
@@ -29,7 +29,7 @@ export class RequestWalletControlTransferCommandHandler extends CommandHandlerBa
     const result = await Result.resolve(wallet.requestAssetTransfer(request));
     if (result.IS_FAILURE) return Result.fail(result.error);
 
-    await this.repoManager.save(wallet);
+    await this.persistence.flush(wallet);
     return Result.ok(result.value);
   }
 }

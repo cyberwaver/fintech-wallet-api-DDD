@@ -29,4 +29,8 @@ export class ValueObject<T> {
   public toJSON(): unknown {
     return this.value;
   }
+
+  public toString(): string {
+    return String(this.value);
+  }
 }

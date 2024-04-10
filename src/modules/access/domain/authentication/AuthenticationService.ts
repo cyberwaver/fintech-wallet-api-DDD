@@ -3,6 +3,8 @@ import { IHashingService } from 'src/common/infrastructure/IHashingService';
 import { IJWTService } from 'src/common/infrastructure/IJWTService';
 import { AuthenticationType } from './AuthenticationType';
 import { IAuthenticationsRepository } from './IAuthenticationsRepository';
+import { Result } from '@Common/utils/Result';
+import { AuthenticationSubject } from './AuthenticationSubject';
 
 export type AuthTokens = {
   accessToken: string;
@@ -48,12 +50,9 @@ export class AuthenticationService {
     return this.hashingService.comparePassword(password, passwordHash);
   }
 
-  async generateAuthTokens(
-    data: AccessTokenPayload,
-    type: AuthenticationType,
-  ): Promise<AuthTokens> {
+  async generateAuthTokens(data: AccessTokenPayload, type: AuthenticationType): Promise<AuthTokens> {
     const accessToken = await this.tokenService.sign(data, {
-      subject: 'AUTH_ACCESS',
+      subject: AuthenticationSubject.Access.toString(),
       audience: type.value,
       ttl: 60 * 30 * 1000,
     });
@@ -63,7 +62,7 @@ export class AuthenticationService {
         type: data.type,
       },
       {
-        subject: 'AUTH_REFRESH',
+        subject: AuthenticationSubject.Refresh.toString(),
         audience: type.value,
         ttl: 60 * 30 * 1000,
       },
@@ -71,12 +70,9 @@ export class AuthenticationService {
     return { accessToken, refreshToken };
   }
 
-  async verifyAccessToken(
-    token: string,
-    type: AuthenticationType,
-  ): Promise<Result<AccessTokenPayload>> {
+  async verifyAccessToken(token: string, type: AuthenticationType): Promise<Result<AccessTokenPayload>> {
     return this.tokenService.verify<AccessTokenVerifyResult>(token, {
-      subject: 'AUTH_ACCESS',
+      subject: AuthenticationSubject.Access.toString(),
       audience: type.value,
     });
   }
@@ -86,7 +82,7 @@ export class AuthenticationService {
     type: AuthenticationType,
   ): Promise<Result<RefreshTokenVerifyResult>> {
     return this.tokenService.verify<RefreshTokenVerifyResult>(token, {
-      subject: 'AUTH_REFRESH',
+      subject: AuthenticationSubject.Refresh.toString(),
       audience: type.value,
     });
   }
@@ -94,7 +90,7 @@ export class AuthenticationService {
   async generatePasswordResetToken(email: string, type: AuthenticationType): Promise<string> {
     return this.tokenService.sign(
       { email, type: type.value },
-      { subject: 'PASSWORD_RESET', audience: type.value, ttl: 60 * 30 * 1000 },
+      { subject: AuthenticationSubject.PasswordReset.toString(), audience: type.value, ttl: 60 * 30 * 1000 },
     );
   }
 
@@ -103,7 +99,7 @@ export class AuthenticationService {
     type: AuthenticationType | string,
   ): Promise<Result<PasswordResetTokenVerifyResult>> {
     return this.tokenService.verify<PasswordResetTokenVerifyResult>(token, {
-      subject: 'PASSWORD_RESET',
+      subject: AuthenticationSubject.PasswordReset.toString(),
       audience: new AuthenticationType(type).value,
     });
   }

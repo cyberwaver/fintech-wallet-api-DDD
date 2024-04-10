@@ -3,7 +3,7 @@ import { plainToClass } from 'class-transformer';
 import { CommandHandlerBase } from 'src/common/application/CommandHandlerBase';
 import { Amount } from 'src/common/domain/Amount';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
-import { IRepositoryManager } from 'src/common/infrastructure/IRepositoryManager';
+import { IPersistenceManager } from '@Common/infrastructure/IPersistenceManager';
 import { IWalletTemplatesRepository } from 'src/modules/wallet/domain/wallet-template/IWalletTemplatesRepository';
 import { NewWalletTransactionDTO } from 'src/modules/wallet/domain/wallet/dto/NewWalletTransactionDTO';
 import { IWalletsRepository } from 'src/modules/wallet/domain/wallet/IWalletsRepository';
@@ -21,7 +21,7 @@ export class RequestBulkWalletTransferCommandHandler extends CommandHandlerBase<
     private walletService: WalletService,
     private walletsRepo: IWalletsRepository,
     private walletTemplatesRepo: IWalletTemplatesRepository,
-    private repoManager: IRepositoryManager,
+    private persistence: IPersistenceManager,
   ) {
     super();
   }
@@ -43,7 +43,7 @@ export class RequestBulkWalletTransferCommandHandler extends CommandHandlerBase<
     const result = await Result.resolve(wallet.handleTransactionRequest(request, template));
     if (result.IS_FAILURE) return Result.fail(result.error);
 
-    await this.repoManager.save(wallet);
+    await this.persistence.flush(wallet);
     return Result.ok();
   }
 }

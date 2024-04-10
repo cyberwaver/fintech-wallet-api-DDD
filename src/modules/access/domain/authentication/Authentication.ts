@@ -1,6 +1,5 @@
 import { Type } from 'class-transformer';
 import { AggregateRoot } from 'src/common/domain/AggregateRoot';
-import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
 import { AuthenticationService, AuthTokens } from './AuthenticationService';
 import { AuthenticationType } from './AuthenticationType';
 import { NewAuthenticationDTO, PasswordResetDTO } from './dto/dtos.index';
@@ -10,9 +9,10 @@ import {
   AuthenticationPasswordResetRequestedEvent,
 } from './events/events.index';
 import { AuthEmailShouldBeUniquePerType } from './rules/rules.index';
+import { AuthenticationId } from './AuthenticationId';
 
 export class AuthenticationProps {
-  id: UniqueEntityID;
+  id: AuthenticationId;
   @Type(() => AuthenticationType)
   type: AuthenticationType;
   firstName: string;
@@ -29,10 +29,7 @@ export class Authentication extends AggregateRoot<AuthenticationProps> {
     super(props);
   }
 
-  public async matchPassword(
-    password: string,
-    authService: AuthenticationService,
-  ): Promise<boolean> {
+  public async matchPassword(password: string, authService: AuthenticationService): Promise<boolean> {
     return authService.comparePassword(password, this.props.password);
   }
 
@@ -54,10 +51,7 @@ export class Authentication extends AggregateRoot<AuthenticationProps> {
     this.apply(new AuthenticationPasswordResetRequestedEvent(token, this.ID));
   }
 
-  public async resetPassword(
-    request: PasswordResetDTO,
-    authService: AuthenticationService,
-  ): Promise<void> {
+  public async resetPassword(request: PasswordResetDTO, authService: AuthenticationService): Promise<void> {
     const passwordHash = await authService.hashPassword(request.password);
     this.apply(new AuthenticationPasswordResetEvent({ passwordHash }, this.ID));
   }
@@ -81,7 +75,11 @@ export class Authentication extends AggregateRoot<AuthenticationProps> {
   }
 
   private $onAuthenticationCreatedEvent($event: AuthenticationCreatedEvent) {
-    this.mapToProps($event.payload);
+    this.props.id = $event.payload.id;
+    this.props.type = new AuthenticationType($event.payload.type);
+    this.props.firstName = $event.payload.firstName;
+    this.props.lastName = $event.payload.lastName;
+    this.props.email = $event.payload.email;
     this.props.password = $event.payload.passwordHash;
     this.props.createdAt = new Date();
   }

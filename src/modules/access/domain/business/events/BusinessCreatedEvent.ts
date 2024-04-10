@@ -1,11 +1,11 @@
 import { DomainEvent } from 'src/common/domain/event/DomainEvent';
-import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
 import { NewBusinessDTO } from '../dto/dtos.index';
+import { BusinessId } from '../BusinessId';
 
 export class BusinessCreatedEvent extends DomainEvent {
-  public payload: NewBusinessDTO & { businessId: UniqueEntityID; createdAt: Date };
-  constructor(data: NewBusinessDTO, businessId: UniqueEntityID = new UniqueEntityID()) {
-    super(businessId);
-    this.payload = { ...data, businessId, createdAt: new Date() };
+  public payload: NewBusinessDTO & { id: BusinessId; createdAt: Date };
+  constructor(data: NewBusinessDTO, id = new BusinessId()) {
+    super(id);
+    this.payload = { ...data, id, createdAt: new Date() };
   }
 }
