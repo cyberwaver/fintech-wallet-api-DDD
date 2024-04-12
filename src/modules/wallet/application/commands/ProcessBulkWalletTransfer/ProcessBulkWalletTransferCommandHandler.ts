@@ -9,11 +9,12 @@ import { IWalletsRepository } from 'src/modules/wallet/domain/wallet/IWalletsRep
 import { WalletTransactionClass } from 'src/modules/wallet/domain/wallet/WalletTransactionClass';
 import { WalletTransactionType } from 'src/modules/wallet/domain/wallet/WalletTransactionType';
 import { ProcessBulkWalletTransferCommand } from './ProcessBulkWalletTransferCommand';
+import { Result } from '@Common/utils/Result';
 
 @CommandHandler(ProcessBulkWalletTransferCommand)
 export class ProcessBulkWalletTransferCommandHandler extends CommandHandlerBase<
   ProcessBulkWalletTransferCommand,
-  UniqueEntityID
+  void
 > {
   constructor(
     private walletsRepo: IWalletsRepository,
@@ -25,7 +26,7 @@ export class ProcessBulkWalletTransferCommandHandler extends CommandHandlerBase<
 
   protected async executeImpl(command: ProcessBulkWalletTransferCommand): Promise<Result<void, Error>> {
     const debitRequest = new NewWalletTransactionDTO();
-    debitRequest.class = WalletTransactionClass.AuthFinancial;
+    debitRequest.class = WalletTransactionClass.AuthAdv;
     debitRequest.type = WalletTransactionType.TransferFrom;
 
     const creditRequest = new NewWalletTransactionDTO();
@@ -67,7 +68,7 @@ export class ProcessBulkWalletTransferCommandHandler extends CommandHandlerBase<
     }
 
     const completionRequest = new NewWalletTransactionDTO();
-    completionRequest.class = WalletTransactionClass.Completion;
+    completionRequest.class = WalletTransactionClass.FinancialAdv;
     completionRequest.type = WalletTransactionType.TransferFrom;
     completionRequest.amount = Amount.Zero;
 

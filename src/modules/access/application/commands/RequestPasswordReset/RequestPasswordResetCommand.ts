@@ -1,8 +1,10 @@
-import { IsEmail } from 'class-validator';
-import { AuthenticationType } from 'src/modules/access/domain/authentication/AuthenticationType';
+import { IsEmail, IsIn, IsNotEmpty } from 'class-validator';
 
 export class RequestPasswordResetCommand {
+  @IsNotEmpty()
+  @IsIn(['USER', 'INSTITUTION'])
   type: string;
+
   @IsEmail()
   email: string;
 }

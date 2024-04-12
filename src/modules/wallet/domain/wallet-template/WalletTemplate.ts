@@ -80,12 +80,10 @@ export class WalletTemplate extends AggregateRoot<WalletTemplateProps> {
   }
 
   private $onWalletTemplatedCreatedEvent($event: WalletTemplatedCreatedEvent) {
-    this.mapToProps($event.payload);
     this.props.createdAt = new Date();
   }
 
   private $onWalletTemplateUpdatedEvent($event: WalletTemplateUpdatedEvent) {
-    this.mapToProps($event.payload);
     this.props.updatedAt = new Date();
   }
 }

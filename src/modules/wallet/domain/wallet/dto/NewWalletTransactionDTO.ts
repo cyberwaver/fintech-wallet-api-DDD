@@ -4,8 +4,13 @@ import { WalletTransactionType } from '../WalletTransactionType';
 import { WalletTransactionClass } from '../WalletTransactionClass';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
 import { Amount } from 'src/common/domain/Amount';
+import { WalletId } from '../WalletId';
 
 export class NewWalletTransactionDTO {
+  @IsNotEmpty()
+  @Type(() => WalletId)
+  walletId: WalletId;
+
   @IsNotEmpty()
   @Type(() => WalletTransactionClass)
   class: WalletTransactionClass;

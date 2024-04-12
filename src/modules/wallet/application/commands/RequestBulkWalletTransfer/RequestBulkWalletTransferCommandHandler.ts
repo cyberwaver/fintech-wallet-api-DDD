@@ -11,11 +11,12 @@ import { WalletTransactionClass } from 'src/modules/wallet/domain/wallet/WalletT
 import { WalletTransactionType } from 'src/modules/wallet/domain/wallet/WalletTransactionType';
 import { WalletService } from 'src/modules/wallet/domain/WalletService';
 import { RequestBulkWalletTransferCommand } from './RequestBulkWalletTransferCommand';
+import { Result } from '@Common/utils/Result';
 
 @CommandHandler(RequestBulkWalletTransferCommand)
 export class RequestBulkWalletTransferCommandHandler extends CommandHandlerBase<
   RequestBulkWalletTransferCommand,
-  UniqueEntityID
+  void
 > {
   constructor(
     private walletService: WalletService,

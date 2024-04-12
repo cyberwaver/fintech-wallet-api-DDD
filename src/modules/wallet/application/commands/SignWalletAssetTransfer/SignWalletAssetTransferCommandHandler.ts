@@ -9,9 +9,12 @@ import { SignWalletAssetTransferCommand } from './SignWalletAssetTransferCommand
 @CommandHandler(SignWalletAssetTransferCommand)
 export class SignWalletAssetTransferCommandHandler extends CommandHandlerBase<
   SignWalletAssetTransferCommand,
-  UniqueEntityID
+  void
 > {
-  constructor(private walletsRepo: IWalletsRepository, private persistence: IPersistenceManager) {
+  constructor(
+    private walletsRepo: IWalletsRepository,
+    private persistence: IPersistenceManager,
+  ) {
     super();
   }
 

@@ -15,7 +15,7 @@ export default class CreateAuthenticationRequestDTO {
   @IsNotEmpty()
   email: string;
 
-  @Min(6, { message: 'Password length should be minimum of 6' })
+  // @Min(6, { message: 'Password length should be minimum of 6' })
   @IsNotEmpty()
   password: string;
 

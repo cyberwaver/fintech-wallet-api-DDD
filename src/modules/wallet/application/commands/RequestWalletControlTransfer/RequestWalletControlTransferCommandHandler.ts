@@ -7,13 +7,17 @@ import { NewWalletAssetTransferDTO } from 'src/modules/wallet/domain/wallet/dto/
 import { IWalletsRepository } from 'src/modules/wallet/domain/wallet/IWalletsRepository';
 import { WalletAssetType } from 'src/modules/wallet/domain/wallet/WalletAssetType';
 import { RequestWalletControlTransferCommand } from './RequestWalletControlTransferCommand';
+import { Result } from '@Common/utils/Result';
 
 @CommandHandler(RequestWalletControlTransferCommand)
 export class RequestWalletControlTransferCommandHandler extends CommandHandlerBase<
   RequestWalletControlTransferCommand,
   UniqueEntityID
 > {
-  constructor(private walletsRepo: IWalletsRepository, private persistence: IPersistenceManager) {
+  constructor(
+    private walletsRepo: IWalletsRepository,
+    private persistence: IPersistenceManager,
+  ) {
     super();
   }
 

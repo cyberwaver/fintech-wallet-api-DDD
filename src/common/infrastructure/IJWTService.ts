@@ -1,10 +1,12 @@
+import { Result } from '@Common/utils/Result';
+
 type JWTServiceOption = {
   subject?: string;
   audience?: string;
-  ttl?: number;
+  ttl?: string | number;
 };
 
-export interface IJWTService {
-  sign(data: unknown, option?: JWTServiceOption): Promise<string>;
-  verify<T>(token: string, option?: JWTServiceOption): Promise<Result<T>>;
+export abstract class IJWTService {
+  abstract sign(data: unknown, option?: JWTServiceOption): Promise<Result<string>>;
+  abstract verify<T>(token: string, option?: JWTServiceOption): Promise<Result<T>>;
 }

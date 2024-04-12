@@ -26,7 +26,7 @@ export abstract class Entity<P extends { id: UniqueEntityID }> {
     return this.id.equals(object.id);
   }
 
-  public toJSON(): string {
-    return JSON.parse(JSON.stringify(this.props));
+  public getProps(): P {
+    return Object.create(this.props);
   }
 }

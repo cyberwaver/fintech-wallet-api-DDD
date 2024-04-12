@@ -10,6 +10,7 @@ import { WalletTransactionClass } from 'src/modules/wallet/domain/wallet/WalletT
 import { WalletTransactionType } from 'src/modules/wallet/domain/wallet/WalletTransactionType';
 import { WalletService } from 'src/modules/wallet/domain/WalletService';
 import { CreateWalletDepositTransactionCommand } from './CreateWalletDepositTransactionCommand';
+import { Result } from '@Common/utils/Result';
 
 @CommandHandler(CreateWalletDepositTransactionCommand)
 export class CreateWalletDepositTransactionCommandHandler extends CommandHandlerBase<
@@ -31,9 +32,16 @@ export class CreateWalletDepositTransactionCommandHandler extends CommandHandler
     const dto = plainToClass(NewWalletTransactionDTO, command);
     dto.class = WalletTransactionClass.Financial;
     dto.type = WalletTransactionType.Deposit;
-    const wallet = await this.walletsRepo.findById(dto.walletId);
-    const template = await this.walletTemplatesRepo.findById(wallet.templateId);
-    const txnId = await wallet.handleTransactionRequest(dto, template, this.walletService);
+
+    const result = await this.walletsRepo.findById(dto.walletId);
+    if (result.IS_FAILURE) return Result.fail(result.error);
+    const wallet = result.value;
+
+    const templateResult = await this.walletTemplatesRepo.findById(wallet.templateId);
+    if (templateResult.IS_FAILURE) return Result.fail(templateResult.error);
+    const template = templateResult.value;
+
+    const txnId = await wallet.handleTransactionRequest(dto, template);
     await this.persistence.flush(wallet);
     return Result.ok(txnId);
   }

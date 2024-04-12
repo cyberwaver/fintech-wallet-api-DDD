@@ -1,11 +1,14 @@
-export class ApplicationException extends Error {
-  constructor();
-  constructor(message: string);
+import { HttpException, HttpStatus } from '@nestjs/common';
+
+export class ApplicationException extends HttpException {
   constructor(
-    public message = 'A application error occurred',
-    public code?: string,
-    public extras?: any,
+    message = 'A application error occurred',
+    code = HttpStatus.BAD_REQUEST,
+    meta?: Record<string, unknown>,
+    cause?: Error,
   ) {
-    super();
+    meta = meta ?? {};
+    super({ status: 'failed', statusCode: code, message, meta }, code, { cause });
+    Object.assign(meta, { type: this.constructor.name });
   }
 }

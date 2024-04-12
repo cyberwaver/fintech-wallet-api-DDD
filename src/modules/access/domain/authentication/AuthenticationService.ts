@@ -5,6 +5,7 @@ import { AuthenticationType } from './AuthenticationType';
 import { IAuthenticationsRepository } from './IAuthenticationsRepository';
 import { Result } from '@Common/utils/Result';
 import { AuthenticationSubject } from './AuthenticationSubject';
+import { Injectable } from '@nestjs/common';
 
 export type AuthTokens = {
   accessToken: string;
@@ -31,6 +32,7 @@ type RefreshTokenVerifyResult = {
   type: string;
 };
 
+@Injectable()
 export class AuthenticationService {
   constructor(
     private authsRepo: IAuthenticationsRepository,
@@ -39,7 +41,9 @@ export class AuthenticationService {
   ) {}
 
   async authExists(email: string, type: AuthenticationType): Promise<boolean> {
-    return this.authsRepo.authExists(email, type.value);
+    const result = await this.authsRepo.authExists(email, type.value);
+    if (result.IS_FAILURE) return false;
+    return result.value;
   }
 
   async hashPassword(password: string): Promise<string> {
@@ -50,13 +54,13 @@ export class AuthenticationService {
     return this.hashingService.comparePassword(password, passwordHash);
   }
 
-  async generateAuthTokens(data: AccessTokenPayload, type: AuthenticationType): Promise<AuthTokens> {
-    const accessToken = await this.tokenService.sign(data, {
+  async generateAuthTokens(data: AccessTokenPayload, type: AuthenticationType): Promise<Result<AuthTokens>> {
+    const accessTokenResult = await this.tokenService.sign(data, {
       subject: AuthenticationSubject.Access.toString(),
       audience: type.value,
       ttl: 60 * 30 * 1000,
     });
-    const refreshToken = await this.tokenService.sign(
+    const refreshTokenResult = await this.tokenService.sign(
       {
         authId: data.authId,
         type: data.type,
@@ -67,7 +71,11 @@ export class AuthenticationService {
         ttl: 60 * 30 * 1000,
       },
     );
-    return { accessToken, refreshToken };
+
+    const result = Result.combine(accessTokenResult, accessTokenResult);
+    if (result.IS_FAILURE) return Result.fail(result.error);
+
+    return Result.ok({ accessToken: accessTokenResult.value, refreshToken: refreshTokenResult.value });
   }
 
   async verifyAccessToken(token: string, type: AuthenticationType): Promise<Result<AccessTokenPayload>> {
@@ -87,10 +95,10 @@ export class AuthenticationService {
     });
   }
 
-  async generatePasswordResetToken(email: string, type: AuthenticationType): Promise<string> {
+  async generatePasswordResetToken(email: string, type: AuthenticationType): Promise<Result<string>> {
     return this.tokenService.sign(
       { email, type: type.value },
-      { subject: AuthenticationSubject.PasswordReset.toString(), audience: type.value, ttl: 60 * 30 * 1000 },
+      { subject: AuthenticationSubject.PasswordReset.toString(), audience: type.value, ttl: '24h' },
     );
   }
 

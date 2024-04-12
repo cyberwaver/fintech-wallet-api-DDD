@@ -7,10 +7,14 @@ import { NewWalletDTO } from 'src/modules/wallet/domain/wallet/dto/NewWalletDTO'
 import { Wallet } from 'src/modules/wallet/domain/wallet/Wallet';
 import { WalletService } from 'src/modules/wallet/domain/WalletService';
 import { CreateWalletCommand } from './CreateWalletCommand';
+import { Result } from '@Common/utils/Result';
 
 @CommandHandler(CreateWalletCommand)
 export class CreateWalletCommandHandler extends CommandHandlerBase<CreateWalletCommand, UniqueEntityID> {
-  constructor(private walletService: WalletService, private persistence: IPersistenceManager) {
+  constructor(
+    private walletService: WalletService,
+    private persistence: IPersistenceManager,
+  ) {
     super();
   }
 

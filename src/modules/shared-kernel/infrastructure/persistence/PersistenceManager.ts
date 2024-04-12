@@ -23,9 +23,7 @@ export default class PersistenceManager implements IPersistenceManager {
     return this.repositoryProvider.get(aggregateRoot);
   }
 
-  async flush<T extends { id: UniqueEntityID }>(
-    ...aggregateRoots: AggregateRoot<T>[]
-  ): Promise<Result<void, Error>> {
+  async flush<T extends { id: UniqueEntityID }>(...aggregateRoots: AggregateRoot<T>[]): Promise<void> {
     const domainEvents: IDomainEvent[] = [];
     for (const aggregateRoot of aggregateRoots) {
       const repository = this.repositoryProvider.getByName(aggregateRoot.name);
@@ -35,7 +33,7 @@ export default class PersistenceManager implements IPersistenceManager {
     }
 
     const result = await Result.resolve(this.options.entityManager.flush());
-    if (result.IS_SUCCESS) this.eventBus.publishAll(domainEvents);
-    return result;
+    if (result.IS_FAILURE) throw result.error;
+    this.eventBus.publishAll(domainEvents);
   }
 }

@@ -1,4 +1,4 @@
 import { IRepository } from 'src/common/domain/IRepository';
 import { WalletTemplate } from './WalletTemplate';
 
-export interface IWalletTemplatesRepository extends IRepository<WalletTemplate> {}
+export abstract class IWalletTemplatesRepository extends IRepository<WalletTemplate> {}

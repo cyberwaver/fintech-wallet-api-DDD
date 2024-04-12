@@ -2,7 +2,8 @@ import { Expose, plainToClass, Transform, Type } from 'class-transformer';
 
 import { AggregateRoot } from '@Common/domain/AggregateRoot';
 import { UniqueEntityID } from '@Common/domain/UniqueEntityID';
-import { ApplicationException, DomainValidationException } from '@Common/exceptions/exceptions.index';
+import { ApplicationException } from '@Common/exceptions/ApplicationException';
+import { DomainValidationException } from '@Common/exceptions/DomainValidationException';
 import { Amount } from '@Common/domain/Amount';
 
 import {

@@ -9,6 +9,7 @@ import { IWalletsRepository } from 'src/modules/wallet/domain/wallet/IWalletsRep
 import { WalletTransactionClass } from 'src/modules/wallet/domain/wallet/WalletTransactionClass';
 import { WalletTransactionType } from 'src/modules/wallet/domain/wallet/WalletTransactionType';
 import { CreateWalletTransferTransactionCommand } from './CreateWalletTransferTransactionCommand';
+import { Result } from '@Common/utils/Result';
 
 @CommandHandler(CreateWalletTransferTransactionCommand)
 export class CreateWalletTransferTransactionCommandHandler extends CommandHandlerBase<

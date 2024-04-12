@@ -6,7 +6,9 @@ import { AuthenticationService } from 'src/modules/access/domain/authentication/
 import { IAuthenticationsRepository } from 'src/modules/access/domain/authentication/IAuthenticationsRepository';
 import { RequestPasswordResetCommand } from './RequestPasswordResetCommand';
 import { Result } from '@Common/utils/Result';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 @CommandHandler(RequestPasswordResetCommand)
 export class RequestPasswordResetCommandHandler extends CommandHandlerBase<
   RequestPasswordResetCommand,

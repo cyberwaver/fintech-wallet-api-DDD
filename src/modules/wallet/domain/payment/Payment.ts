@@ -13,7 +13,7 @@ import {
 import { PaymentStatus } from './PaymentStatus';
 import { PaymentType } from './PaymentType';
 
-class PaymentProps {
+export class PaymentProps {
   id: UniqueEntityID;
   walletId: UniqueEntityID;
   amount: number;
@@ -26,8 +26,8 @@ class PaymentProps {
 
 export class Payment extends AggregateRoot<PaymentProps> {
   public readonly type = this.props.type;
-  constructor(dto?: Record<string, unknown>) {
-    super(dto, PaymentProps);
+  constructor(props?: PaymentProps) {
+    super(props);
   }
 
   static async CreateTransfer(request: NewTransferPaymentRequestDTO): Promise<Payment> {

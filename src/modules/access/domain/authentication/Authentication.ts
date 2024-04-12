@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { AggregateRoot } from 'src/common/domain/AggregateRoot';
 import { AuthenticationService, AuthTokens } from './AuthenticationService';
 import { AuthenticationType } from './AuthenticationType';
@@ -10,11 +10,21 @@ import {
 } from './events/events.index';
 import { AuthEmailShouldBeUniquePerType } from './rules/rules.index';
 import { AuthenticationId } from './AuthenticationId';
+import { InvalidCredentialException } from '@Common/exceptions/InvalidCredentialException';
+
+class AuthType {
+  type: string;
+}
 
 export class AuthenticationProps {
+  @Transform(({ value }) => new AuthenticationId(value))
+  @Type(() => AuthenticationId)
   id: AuthenticationId;
+  @Transform(({ value }) => new AuthenticationType(value))
   @Type(() => AuthenticationType)
   type: AuthenticationType;
+  @Type(() => AuthType)
+  typo: AuthType;
   firstName: string;
   lastName: string;
   email: string;
@@ -29,12 +39,10 @@ export class Authentication extends AggregateRoot<AuthenticationProps> {
     super(props);
   }
 
-  public async matchPassword(password: string, authService: AuthenticationService): Promise<boolean> {
-    return authService.comparePassword(password, this.props.password);
-  }
-
-  public async generateTokens(authService: AuthenticationService): Promise<AuthTokens> {
-    return authService.generateAuthTokens(
+  public async generateTokens(password: string, authService: AuthenticationService): Promise<AuthTokens> {
+    const passwordMatches = await authService.comparePassword(password, this.props.password);
+    if (!passwordMatches) throw new InvalidCredentialException('Password incorrect.');
+    const result = await authService.generateAuthTokens(
       {
         authId: this.props.id,
         type: this.props.type,
@@ -44,11 +52,15 @@ export class Authentication extends AggregateRoot<AuthenticationProps> {
       },
       this.props.type,
     );
+    if (result.IS_FAILURE) throw result.error;
+
+    return result.value;
   }
 
   public async requestPasswordReset(authService: AuthenticationService): Promise<void> {
-    const token = await authService.generatePasswordResetToken(this.props.email, this.props.type);
-    this.apply(new AuthenticationPasswordResetRequestedEvent(token, this.ID));
+    const result = await authService.generatePasswordResetToken(this.props.email, this.props.type);
+    if (result.IS_FAILURE) throw result.error;
+    this.apply(new AuthenticationPasswordResetRequestedEvent(result.value, this.ID));
   }
 
   public async resetPassword(request: PasswordResetDTO, authService: AuthenticationService): Promise<void> {

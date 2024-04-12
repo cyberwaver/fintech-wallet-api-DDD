@@ -7,13 +7,17 @@ import { NewWalletAssetTransferDTO } from 'src/modules/wallet/domain/wallet/dto/
 import { IWalletsRepository } from 'src/modules/wallet/domain/wallet/IWalletsRepository';
 import { WalletAssetType } from 'src/modules/wallet/domain/wallet/WalletAssetType';
 import { RequestWalletStakeTransferCommand } from './RequestWalletStakeTransferCommand';
+import { Result } from '@Common/utils/Result';
 
 @CommandHandler(RequestWalletStakeTransferCommand)
 export class RequestWalletStakeTransferCommandHandler extends CommandHandlerBase<
   RequestWalletStakeTransferCommand,
   UniqueEntityID
 > {
-  constructor(private walletsRepo: IWalletsRepository, private persistence: IPersistenceManager) {
+  constructor(
+    private walletsRepo: IWalletsRepository,
+    private persistence: IPersistenceManager,
+  ) {
     super();
   }
 
@@ -22,7 +26,9 @@ export class RequestWalletStakeTransferCommandHandler extends CommandHandlerBase
     request.type = WalletAssetType.Stake;
     request.sourceId = new UniqueEntityID(command.fromHolderId);
     request.destinationId = new UniqueEntityID(command.toHolderId);
-    const wallet = await this.walletsRepo.findById(command.walletId);
+    const result = await this.walletsRepo.findById(command.walletId);
+    if (result.IS_FAILURE) return Result.fail(result.error);
+    const wallet = result.value;
     const transferId = await wallet.requestAssetTransfer(request);
     await this.persistence.flush(wallet);
     return Result.ok(transferId);

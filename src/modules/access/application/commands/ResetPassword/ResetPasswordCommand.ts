@@ -7,4 +7,7 @@ export class ResetPasswordCommand {
 
   @IsNotEmpty()
   token: string;
+
+  @IsNotEmpty()
+  password: string;
 }

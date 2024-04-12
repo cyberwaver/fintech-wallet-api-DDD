@@ -6,7 +6,7 @@ import { Wallet, WalletProps } from '@Wallet/domain/wallet/Wallet';
 import { WalletType } from '@Wallet/domain/wallet/WalletType';
 import { WalletService } from '@Wallet/domain/WalletService';
 import { WalletHolderAccountShouldBeVerified } from '@Wallet/domain/wallet/rules/WalletHolderAccountShouldBeVerified';
-import { BusinessRuleViolationException } from '@Common/exceptions/BusinessRuleViolationException';
+import { DomainRuleViolationException } from '@Common/exceptions/DomainRuleViolationException';
 import { Result } from '@Common/utils/Result';
 import { WalletCreatedEvent } from '@Wallet/domain/wallet/events/WalletCreatedEvent';
 import { Amount } from '@Common/domain/Amount';
@@ -24,7 +24,7 @@ describe('Create Wallet', () => {
     const result = await Result.resolve(Wallet.create(data, walletService));
 
     expect(result.IS_FAILURE).toBe(true);
-    expect(result.error).toBeInstanceOf(BusinessRuleViolationException);
+    expect(result.error).toBeInstanceOf(DomainRuleViolationException);
     expect(result.error.name).toBe(WalletHolderAccountShouldBeVerified.name);
   });
 

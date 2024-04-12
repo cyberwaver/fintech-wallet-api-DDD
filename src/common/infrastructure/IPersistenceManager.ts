@@ -7,7 +7,5 @@ export abstract class IPersistenceManager {
   abstract getRepository<T extends { id: UniqueEntityID }>(
     aggregateRoot: typeof AggregateRoot<T>,
   ): IRepository<AggregateRoot<T>>;
-  abstract flush<T extends { id: UniqueEntityID }>(
-    ...aggregateRoots: AggregateRoot<T>[]
-  ): Promise<Result<void, Error>>;
+  abstract flush<T extends { id: UniqueEntityID }>(...aggregateRoots: AggregateRoot<T>[]): Promise<void>;
 }

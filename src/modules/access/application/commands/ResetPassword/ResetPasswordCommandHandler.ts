@@ -9,7 +9,9 @@ import { IAuthenticationsRepository } from 'src/modules/access/domain/authentica
 import { ResetPasswordCommand } from './ResetPasswordCommand';
 import { Result } from '@Common/utils/Result';
 import { IPersistenceManager } from '@Common/infrastructure/IPersistenceManager';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 @CommandHandler(ResetPasswordCommand)
 export class ResetPasswordCommandHandler extends CommandHandlerBase<ResetPasswordCommand, UniqueEntityID> {
   constructor(
@@ -24,11 +26,15 @@ export class ResetPasswordCommandHandler extends CommandHandlerBase<ResetPasswor
     const verifyResult = await this.authService.verifyPasswordResetToken(command.token, command.type);
 
     if (!verifyResult.IS_SUCCESS) {
-      return Result.fail(new InvalidCredentialException('Invalid password reset token.'));
+      return Result.fail(new InvalidCredentialException('Invalid password reset token'));
     }
 
-    const result = await this.authsRepo.findOneByEmailAndType(verifyResult.value.email, command.type);
+    const result = await this.authsRepo.findOneByEmailAndType(
+      verifyResult.value.email,
+      verifyResult.value.type,
+    );
     if (result.IS_FAILURE) return Result.fail(result.error);
+
     const authentication = result.value;
     await authentication.resetPassword(plainToClass(PasswordResetDTO, command), this.authService);
     await this.persistence.flush(authentication);

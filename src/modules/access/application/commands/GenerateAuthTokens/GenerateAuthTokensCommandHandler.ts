@@ -8,24 +8,32 @@ import {
 import { IAuthenticationsRepository } from 'src/modules/access/domain/authentication/IAuthenticationsRepository';
 import { GenerateAuthTokensCommand } from './GenerateAuthTokensCommand';
 import { Result } from '@Common/utils/Result';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 @CommandHandler(GenerateAuthTokensCommand)
 export class GenerateAuthTokensCommandHandler extends CommandHandlerBase<
   GenerateAuthTokensCommand,
   AuthTokens
 > {
-  constructor(private authService: AuthenticationService, private authsRepo: IAuthenticationsRepository) {
+  constructor(
+    private authService: AuthenticationService,
+    private authsRepo: IAuthenticationsRepository,
+  ) {
     super();
   }
 
   protected async executeImpl(command: GenerateAuthTokensCommand): Promise<Result<AuthTokens>> {
-    const result = await this.authsRepo.findOneByEmailAndType(command.email, command.type);
-    if (result.IS_FAILURE) return Result.fail(result.error);
+    const authenticationResult = await this.authsRepo.findOneByEmailAndType(command.email, command.type);
+    if (authenticationResult.IS_FAILURE) return Result.fail(authenticationResult.error);
+    const authentication = authenticationResult.value;
 
-    const authentication = result.value;
-    const passwordMatches = await authentication.matchPassword(command.password, this.authService);
-    if (!passwordMatches) return Result.fail(new InvalidCredentialException('Password incorrect.'));
-    const tokens = await authentication.generateTokens(this.authService);
-    return Result.ok(tokens);
+    const result = await Result.resolve(authentication.generateTokens(command.password, this.authService));
+
+    if (result.IS_SUCCESS) return Result.ok(result.value);
+
+    if (result.error instanceof InvalidCredentialException)
+      return Result.fail(new InvalidCredentialException('Invalid username or password'));
+    return Result.fail(result.error);
   }
 }

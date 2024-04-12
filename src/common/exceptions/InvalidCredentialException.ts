@@ -5,5 +5,3 @@ export class InvalidCredentialException extends ApplicationException {
     super(message);
   }
 }
-
-module.exports = InvalidCredentialException;
