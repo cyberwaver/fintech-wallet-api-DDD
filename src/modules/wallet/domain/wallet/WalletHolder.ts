@@ -6,7 +6,7 @@ import { NewWalletHolderDTO } from './dto/dtos.index';
 import { WalletHolderStatus } from './WalletHolderStatus';
 import { WalletId } from './WalletId';
 
-export class WalletHolderProps {
+export class WalletHolderState {
   @Type(() => UniqueEntityID)
   @Expose()
   id: UniqueEntityID;
@@ -31,40 +31,40 @@ export class WalletHolderProps {
   updatedAt: Date;
 }
 
-export class WalletHolder extends Entity<WalletHolderProps> {
-  constructor(props?: WalletHolderProps) {
-    super(props);
+export class WalletHolder extends Entity<WalletHolderState> {
+  constructor(state?: WalletHolderState) {
+    super(state);
   }
 
-  public readonly stake = this.props.stake;
-  public readonly IS_ADMIN = this.props.isAdministrator;
+  public readonly stake = this.state.stake;
+  public readonly IS_ADMIN = this.state.isAdministrator;
 
   public addToStake(value: Amount): void {
-    this.props.stake = this.props.stake.add(value);
-    this.props.updatedAt = new Date();
+    this.state.stake = this.state.stake.add(value);
+    this.state.updatedAt = new Date();
   }
 
   public subtractFromStake(value: Amount): void {
-    this.props.stake = this.props.stake.subtract(value);
-    this.props.updatedAt = new Date();
+    this.state.stake = this.state.stake.subtract(value);
+    this.state.updatedAt = new Date();
   }
 
   public assignAsAdministrator(): void {
-    this.props.isAdministrator = true;
-    this.props.updatedAt = new Date();
+    this.state.isAdministrator = true;
+    this.state.updatedAt = new Date();
   }
 
   public revokeAsAdministrator(): void {
-    this.props.isAdministrator = false;
-    this.props.updatedAt = new Date();
+    this.state.isAdministrator = false;
+    this.state.updatedAt = new Date();
   }
 
   public static create(data: NewWalletHolderDTO): WalletHolder {
-    const props = new WalletHolderProps();
-    props.id = new UniqueEntityID();
-    props.walletId = data.walletId;
-    props.accountId = data.accountId;
-    const holder = new WalletHolder(props);
+    const state = new WalletHolderState();
+    state.id = new UniqueEntityID();
+    state.walletId = data.walletId;
+    state.accountId = data.accountId;
+    const holder = new WalletHolder(state);
     return holder;
   }
 }

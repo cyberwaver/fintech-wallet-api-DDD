@@ -12,19 +12,13 @@ import { AuthEmailShouldBeUniquePerType } from './rules/rules.index';
 import { AuthenticationId } from './AuthenticationId';
 import { InvalidCredentialException } from '@Common/exceptions/InvalidCredentialException';
 
-class AuthType {
-  type: string;
-}
-
-export class AuthenticationProps {
+export class AuthenticationState {
   @Transform(({ value }) => new AuthenticationId(value))
   @Type(() => AuthenticationId)
   id: AuthenticationId;
   @Transform(({ value }) => new AuthenticationType(value))
   @Type(() => AuthenticationType)
   type: AuthenticationType;
-  @Type(() => AuthType)
-  typo: AuthType;
   firstName: string;
   lastName: string;
   email: string;
@@ -32,33 +26,50 @@ export class AuthenticationProps {
   emailVerifiedAt: Date;
   passwordLastResetAt: Date;
   createdAt: Date;
-}
 
-export class Authentication extends AggregateRoot<AuthenticationProps> {
-  constructor(props?: AuthenticationProps) {
-    super(props);
+  private $onAuthenticationPasswordResetEvent($event: AuthenticationPasswordResetEvent) {
+    this.password = $event.payload.passwordHash;
+    this.passwordLastResetAt = new Date();
   }
 
-  public async generateTokens(password: string, authService: AuthenticationService): Promise<AuthTokens> {
-    const passwordMatches = await authService.comparePassword(password, this.props.password);
-    if (!passwordMatches) throw new InvalidCredentialException('Password incorrect.');
-    const result = await authService.generateAuthTokens(
-      {
-        authId: this.props.id,
-        type: this.props.type,
-        firstName: this.props.firstName,
-        lastName: this.props.lastName,
-        email: this.props.email,
-      },
-      this.props.type,
-    );
-    if (result.IS_FAILURE) throw result.error;
+  private $onAuthenticationCreatedEvent($event: AuthenticationCreatedEvent) {
+    this.id = $event.payload.id;
+    this.type = new AuthenticationType($event.payload.type);
+    this.firstName = $event.payload.firstName;
+    this.lastName = $event.payload.lastName;
+    this.email = $event.payload.email;
+    this.password = $event.payload.passwordHash;
+    this.createdAt = new Date();
+  }
+}
 
-    return result.value;
+export class Authentication extends AggregateRoot<AuthenticationState> {
+  constructor(state?: AuthenticationState) {
+    super(state ?? new AuthenticationState());
+  }
+
+  get type(): AuthenticationType {
+    return this.state.type;
+  }
+
+  get email(): string {
+    return this.state.email;
+  }
+
+  get password(): string {
+    return this.state.password;
+  }
+
+  get firstName(): string {
+    return this.state.firstName;
+  }
+
+  get lastName(): string {
+    return this.state.lastName;
   }
 
   public async requestPasswordReset(authService: AuthenticationService): Promise<void> {
-    const result = await authService.generatePasswordResetToken(this.props.email, this.props.type);
+    const result = await authService.generatePasswordResetToken(this.state.email, this.state.type);
     if (result.IS_FAILURE) throw result.error;
     this.apply(new AuthenticationPasswordResetRequestedEvent(result.value, this.ID));
   }
@@ -79,20 +90,5 @@ export class Authentication extends AggregateRoot<AuthenticationProps> {
     request.passwordHash = await authService.hashPassword(request.password);
     authentication.apply(new AuthenticationCreatedEvent(request));
     return authentication;
-  }
-
-  private $onAuthenticationPasswordResetEvent($event: AuthenticationPasswordResetEvent) {
-    this.props.password = $event.payload.passwordHash;
-    this.props.passwordLastResetAt = new Date();
-  }
-
-  private $onAuthenticationCreatedEvent($event: AuthenticationCreatedEvent) {
-    this.props.id = $event.payload.id;
-    this.props.type = new AuthenticationType($event.payload.type);
-    this.props.firstName = $event.payload.firstName;
-    this.props.lastName = $event.payload.lastName;
-    this.props.email = $event.payload.email;
-    this.props.password = $event.payload.passwordHash;
-    this.props.createdAt = new Date();
   }
 }

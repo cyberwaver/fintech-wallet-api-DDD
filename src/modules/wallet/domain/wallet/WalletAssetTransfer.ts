@@ -10,7 +10,7 @@ import { WalletHolder } from './WalletHolder';
 import { WalletId } from './WalletId';
 import { WalletSignee } from './WalletSignee';
 
-class WalletAssetTransferProps {
+class WalletAssetTransferState {
   @Type(() => UniqueEntityID)
   id: UniqueEntityID;
 
@@ -47,39 +47,39 @@ class WalletAssetTransferProps {
   createdAt: DateTime;
 }
 
-export class WalletAssetTransfer extends Entity<WalletAssetTransferProps> {
-  constructor(props?: WalletAssetTransferProps) {
-    super(props);
+export class WalletAssetTransfer extends Entity<WalletAssetTransferState> {
+  constructor(state?: WalletAssetTransferState) {
+    super(state);
   }
 
-  public readonly type = this.props.type;
-  public readonly status = this.props.status;
-  public readonly sourceId = this.props.sourceId;
-  public readonly destinationId = this.props.destinationId;
-  public readonly value = this.props.value;
-  public readonly completedAt = this.props.completedAt;
-  public readonly createdAt = this.props.createdAt;
+  public readonly type = this.state.type;
+  public readonly status = this.state.status;
+  public readonly sourceId = this.state.sourceId;
+  public readonly destinationId = this.state.destinationId;
+  public readonly value = this.state.value;
+  public readonly completedAt = this.state.completedAt;
+  public readonly createdAt = this.state.createdAt;
 
   public get SIGNED_STAKE(): number {
-    return this.props.signees.reduce((sum, signee) => sum + signee.value.stake, 0);
+    return this.state.signees.reduce((sum, signee) => sum + signee.value.stake, 0);
   }
 
   public get STAKE_THRESHOLD_REACHED(): boolean {
-    return this.SIGNED_STAKE >= this.props.stakeThreshold;
+    return this.SIGNED_STAKE >= this.state.stakeThreshold;
   }
 
   public holderHasSigned(holderId: UniqueEntityID): boolean {
-    return this.props.signees.some((signee) => signee.value.holderId.equals(holderId));
+    return this.state.signees.some((signee) => signee.value.holderId.equals(holderId));
   }
 
   public sign(holder: WalletHolder, stake = holder.stake): void {
     if (this.holderHasSigned(holder.ID)) return;
-    this.props.signees.push(WalletSignee.of(holder, stake));
+    this.state.signees.push(WalletSignee.of(holder, stake));
   }
 
   public complete(): void {
-    this.props.status = WalletAssetTransferStatus.Completed;
-    this.props.completedAt = DateTime.now();
+    this.state.status = WalletAssetTransferStatus.Completed;
+    this.state.completedAt = DateTime.now();
   }
 
   public static create(
@@ -87,15 +87,15 @@ export class WalletAssetTransfer extends Entity<WalletAssetTransferProps> {
     walletId: WalletId,
     id = new UniqueEntityID(),
   ): WalletAssetTransfer {
-    const props = new WalletAssetTransferProps();
-    props.id = id;
-    props.walletId = walletId;
-    props.type = data.type;
-    props.value = data.amount;
-    props.sourceId = data.sourceId;
-    props.destinationId = data.destinationId;
-    props.createdAt = DateTime.now();
+    const state = new WalletAssetTransferState();
+    state.id = id;
+    state.walletId = walletId;
+    state.type = data.type;
+    state.value = data.amount;
+    state.sourceId = data.sourceId;
+    state.destinationId = data.destinationId;
+    state.createdAt = DateTime.now();
 
-    return new WalletAssetTransfer(props);
+    return new WalletAssetTransfer(state);
   }
 }

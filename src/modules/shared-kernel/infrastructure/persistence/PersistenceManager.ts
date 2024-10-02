@@ -1,4 +1,4 @@
-import { IPersistenceManager } from '../../../../common/infrastructure/IPersistenceManager';
+import { IPersistenceManager } from '../../../../common/infrastructure/persistence/IPersistenceManager';
 import { UniqueEntityID } from '@Common/domain/UniqueEntityID';
 import { AggregateRoot } from '@Common/domain/AggregateRoot';
 import RepositoryProvider from '@SharedKernel/infrastructure/persistence/RepositoryProvider';

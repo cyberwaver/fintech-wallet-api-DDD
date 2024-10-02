@@ -35,18 +35,18 @@ export class WalletTransactionProps {
 }
 
 export class WalletTransaction extends Entity<WalletTransactionProps> {
-  public readonly amount = this.props.amount;
-  public readonly type = this.props.type;
-  public readonly status = this.props.status;
-  public readonly action = this.props.action;
+  public readonly amount = this.state.amount;
+  public readonly type = this.state.type;
+  public readonly status = this.state.status;
+  public readonly action = this.state.action;
 
   constructor(props?: WalletTransactionProps) {
     super(props);
   }
 
   complete(): void {
-    this.props.status = WalletTransactionStatus.Completed;
-    this.props.completedAt = new Date();
+    this.state.status = WalletTransactionStatus.Completed;
+    this.state.completedAt = new Date();
   }
 
   public static create(data: NewWalletTransactionDTO, walletId: WalletId): WalletTransaction {

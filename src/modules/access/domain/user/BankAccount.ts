@@ -24,15 +24,15 @@ export class BankAccount extends Entity<BankAccountProps> {
   }
 
   public validate(): void {
-    this.props.isValidated = true;
+    this.state.isValidated = true;
   }
 
   public setAsDefault(): void {
-    this.props.isDefault = true;
+    this.state.isDefault = true;
   }
 
   public unsetAsDefault(): void {
-    this.props.isDefault = false;
+    this.state.isDefault = false;
   }
 
   public static create(request: NewBankAccountDTO): BankAccount {

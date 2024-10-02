@@ -2,7 +2,7 @@ import { CommandHandler } from '@nestjs/cqrs';
 import { plainToClass } from 'class-transformer';
 import { CommandHandlerBase } from 'src/common/application/CommandHandlerBase';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
-import { IPersistenceManager } from '@Common/infrastructure/IPersistenceManager';
+import { IPersistenceManager } from '@Common/infrastructure/persistence/IPersistenceManager';
 import { NewWalletDTO } from 'src/modules/wallet/domain/wallet/dto/NewWalletDTO';
 import { Wallet } from 'src/modules/wallet/domain/wallet/Wallet';
 import { WalletService } from 'src/modules/wallet/domain/WalletService';

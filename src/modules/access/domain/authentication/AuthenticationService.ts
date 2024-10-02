@@ -1,11 +1,11 @@
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
-import { IHashingService } from 'src/common/infrastructure/IHashingService';
-import { IJWTService } from 'src/common/infrastructure/IJWTService';
+import { IHashingService } from '@Common/infrastructure/crypto/IHashingService';
 import { AuthenticationType } from './AuthenticationType';
 import { IAuthenticationsRepository } from './IAuthenticationsRepository';
 import { Result } from '@Common/utils/Result';
 import { AuthenticationSubject } from './AuthenticationSubject';
 import { Injectable } from '@nestjs/common';
+import { IJWTService } from '@Common/infrastructure/crypto/IJWTService';
 
 export type AuthTokens = {
   accessToken: string;

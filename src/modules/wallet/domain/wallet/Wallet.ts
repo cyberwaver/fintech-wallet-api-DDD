@@ -59,7 +59,7 @@ import { WalletId } from './WalletId';
 import { WalletTemplateId } from '../wallet-template/WalletTemplateId';
 import { WalletAssetTransfer } from './WalletAssetTransfer';
 
-export class WalletProps {
+export class WalletState {
   @Type(() => WalletId)
   id: WalletId;
 
@@ -113,39 +113,135 @@ export class WalletProps {
   createdAt: Date;
 
   meta: unknown;
-}
 
-export class Wallet extends AggregateRoot<WalletProps> {
-  constructor(props?: WalletProps) {
-    super(props);
+  private $onWalletCreatedEvent($event: WalletCreatedEvent) {
+    this.id = $event.payload.walletId;
+    this.name = $event.payload.name;
+    this.type = $event.payload.type;
+    const holder = WalletHolder.create({ walletId: this.id, accountId: $event.payload.initiatorId });
+    holder.assignAsAdministrator();
+    this.holders.push(holder);
   }
 
-  public readonly templateId = this.props.templateId;
+  private $onWalletAssetTransferCreatedEvent($event: WalletAssetTransferCreatedEvent) {
+    const transfer = WalletAssetTransfer.create($event.payload, $event.payload.transferId);
+    this.transfers.push(transfer);
+  }
+
+  private $onWalletAssetTransferSignedEvent($event: WalletAssetTransferSignedEvent) {
+    const transfer = Wallet.find(this.transfers, $event.payload.transferId);
+    const holder = Wallet.find(this.holders, $event.payload.holderId);
+    transfer.sign(holder);
+  }
+
+  private $onWalletAssetTransferCompletedEvent($event: WalletAssetTransferCompletedEvent) {
+    const transfer = Wallet.find(this.transfers, $event.payload.transferId);
+
+    if (transfer.type.IS_BALANCE) {
+      this.balance = this.balance.subtract(transfer.value);
+      this.availableBalance = this.availableBalance.add(transfer.value);
+    }
+
+    if (transfer.type.IS_STAKE) {
+      const fromHolder = Wallet.find(this.holders, transfer.sourceId);
+      const toHolder = Wallet.find(this.holders, transfer.destinationId);
+      fromHolder.subtractFromStake(transfer.value);
+      toHolder.addToStake(transfer.value);
+    }
+
+    if (transfer.type.IS_CONTROL) {
+      const administrator = this.holders.find((holder) => holder.IS_ADMIN);
+      const holder = Wallet.find(this.holders, transfer.destinationId);
+      administrator.revokeAsAdministrator();
+      holder.assignAsAdministrator();
+    }
+  }
+
+  private $onWalletAuthTxnCreatedEvent($event: WalletAuthTxnCreatedEvent) {
+    const transaction = WalletTransaction.create($event.payload, this.id);
+    const holdData = new NewWalletAuthHoldDTO();
+    holdData.authTxnId = transaction.ID;
+    holdData.amount = $event.payload.amount;
+    holdData.period = 30;
+    const hold = WalletAuthHold.create(holdData, this.id);
+    this.holdBalance = this.holdBalance.add($event.payload.amount);
+    this.balance = this.balance.subtract($event.payload.amount);
+    this.transactions.push(transaction);
+    this.holds.push(hold);
+  }
+
+  private $onWalletAuthAdvTxnCreatedEvent($event: WalletAuthAdvTxnCreatedEvent) {
+    const transaction = WalletTransaction.create($event.payload, this.id);
+    const hold = Wallet.find(this.holds, $event.payload.originalTxnId);
+    this.holdBalance = this.holdBalance.subtract(hold.balance);
+    this.balance = this.balance.add(hold.balance);
+    this.availableBalance = this.ledgerBalance.add(hold.balance);
+    hold.remove();
+    this.transactions.push(transaction);
+  }
+
+  private $onWalletFinancialTxnCreatedEvent($event: WalletFinancialTxnCreatedEvent) {
+    const transaction = WalletTransaction.create($event.payload, this.id);
+    if (transaction.action.IS_DEBIT) {
+      this.balance = this.balance.subtract($event.payload.amount);
+      this.availableBalance = this.availableBalance.subtract($event.payload.amount);
+      this.ledgerBalance = this.ledgerBalance.subtract($event.payload.amount);
+    } else {
+      this.balance = this.balance.add($event.payload.amount);
+      this.availableBalance = this.availableBalance.add($event.payload.amount);
+      this.ledgerBalance = this.ledgerBalance.add($event.payload.amount);
+    }
+    this.transactions.push(transaction);
+  }
+
+  private $onWalletFinancialAdvTxnCreatedEvent($event: WalletFinancialAdvTxnCreatedEvent) {
+    const hold = Wallet.find(this.holds, $event.payload.originalTxnId);
+    const transaction = WalletTransaction.create($event.payload, this.id);
+    this.transactions.push(transaction);
+    hold.release($event.payload.amount);
+  }
+
+  private $onWalletReversalTxnCreatedEvent($event: WalletReversalTxnCreatedEvent) {
+    const refTxn = Wallet.find(this.transactions, $event.payload.originalTxnId);
+    const txnData = { ...$event.payload, status: refTxn.action.INVERSE.value };
+    const transaction = WalletTransaction.create(txnData, this.id);
+    this.transactions.push(transaction);
+    if (refTxn.action.IS_CREDIT) this.balance = this.balance.add(refTxn.amount);
+    else this.balance = this.balance.subtract(refTxn.amount);
+  }
+}
+
+export class Wallet extends AggregateRoot<WalletState> {
+  constructor(state?: WalletState) {
+    super(state);
+  }
+
+  public readonly templateId = this.state.templateId;
 
   public getAmountLimitExceededType(amount: Amount, txnType: WalletTransactionType): WalletLimitType {
     const { PerTxn, Daily, Weekly, Monthly } = WalletLimitType;
-    if (this.props.limit.isAmountExceeded(amount, txnType, PerTxn)) return PerTxn;
-    let total = amount.add(this.props.total.getValue(Daily, txnType));
-    if (this.props.limit.isAmountExceeded(total, txnType, Daily)) return Daily;
-    total = amount.add(this.props.total.getValue(Weekly, txnType));
-    if (this.props.limit.isAmountExceeded(total, txnType, Weekly)) return Weekly;
-    total = amount.add(this.props.total.getValue(Monthly, txnType));
-    if (this.props.limit.isAmountExceeded(total, txnType, Monthly)) return Monthly;
+    if (this.state.limit.isAmountExceeded(amount, txnType, PerTxn)) return PerTxn;
+    let total = amount.add(this.state.total.getValue(Daily, txnType));
+    if (this.state.limit.isAmountExceeded(total, txnType, Daily)) return Daily;
+    total = amount.add(this.state.total.getValue(Weekly, txnType));
+    if (this.state.limit.isAmountExceeded(total, txnType, Weekly)) return Weekly;
+    total = amount.add(this.state.total.getValue(Monthly, txnType));
+    if (this.state.limit.isAmountExceeded(total, txnType, Monthly)) return Monthly;
   }
 
   public getCountLimitExceededType(txnType: WalletTransactionType): WalletLimitType {
     const { Daily, Weekly, Monthly } = WalletLimitType;
-    let count = this.props.count.getValue(Daily, txnType) + 1;
-    if (this.props.limit.isCountExceeded(count, txnType, Daily)) return Daily;
-    count = this.props.count.getValue(Weekly, txnType) + 1;
-    if (this.props.limit.isCountExceeded(count, txnType, Weekly)) return Weekly;
-    count = this.props.count.getValue(Monthly, txnType) + 1;
-    if (this.props.limit.isCountExceeded(count, txnType, Monthly)) return Monthly;
+    let count = this.state.count.getValue(Daily, txnType) + 1;
+    if (this.state.limit.isCountExceeded(count, txnType, Daily)) return Daily;
+    count = this.state.count.getValue(Weekly, txnType) + 1;
+    if (this.state.limit.isCountExceeded(count, txnType, Weekly)) return Weekly;
+    count = this.state.count.getValue(Monthly, txnType) + 1;
+    if (this.state.limit.isCountExceeded(count, txnType, Monthly)) return Monthly;
   }
 
   public calcHolderAssetTransferEligibleStake(transfer: WalletAssetTransfer, holder: WalletHolder): Amount {
     let stake = holder.stake;
-    const transfers = this.props.transfers.filter((assetTransfer) => {
+    const transfers = this.state.transfers.filter((assetTransfer) => {
       if (!assetTransfer.type.equals(transfer.type)) return false;
       return (
         transfer.createdAt.diff(assetTransfer.createdAt).milliseconds <= 0 &&
@@ -170,7 +266,7 @@ export class Wallet extends AggregateRoot<WalletProps> {
     if (!handler) {
       throw new ApplicationException('Handler not found for request type.');
     }
-    this.props.limit = template.constructLimit(this.props.limit);
+    this.state.limit = template.constructLimit(this.state.limit);
     this.checkRule(new TransactionTypeAmountLimitShouldNotBeExceeded(request.amount, request.type, this));
     this.checkRule(new TransactionTypeCountLimitShouldNotBeExceeded(request.type, this));
     const transactionId = new UniqueEntityID();
@@ -179,8 +275,8 @@ export class Wallet extends AggregateRoot<WalletProps> {
   }
 
   async requestAssetTransfer(request: NewWalletAssetTransferDTO): Promise<UniqueEntityID> {
-    this.checkRule(new WalletSharedTypeOnlyAllowed(this.props.type));
-    const administrator = this.find(this.props.holders, request.initiatorId);
+    this.checkRule(new WalletSharedTypeOnlyAllowed(this.state.type));
+    const administrator = Wallet.find(this.state.holders, request.initiatorId);
     this.checkRule(new RequestInitiatorShouldBeWalletAdministrator(administrator));
 
     if (request.type.IS_BALANCE) {
@@ -189,12 +285,12 @@ export class Wallet extends AggregateRoot<WalletProps> {
     }
 
     if (request.type.IS_STAKE) {
-      const holder = this.find(this.props.holders, request.sourceId);
+      const holder = Wallet.find(this.state.holders, request.sourceId);
       this.checkRule(new AmountShouldNotExceedHolderStakeBalance(holder.stake, request.amount));
     }
 
     if (request.type.IS_CONTROL) {
-      const holder = this.find(this.props.holders, request.destinationId);
+      const holder = Wallet.find(this.state.holders, request.destinationId);
       this.checkRule(new WalletHolderShouldBeAStakeHolder(holder));
     }
 
@@ -204,15 +300,15 @@ export class Wallet extends AggregateRoot<WalletProps> {
   }
 
   async signAssetTransfer(transferId: UniqueEntityID, holderId: UniqueEntityID): Promise<void> {
-    const transfer = this.find(this.props.transfers, transferId);
-    const holder = this.find(this.props.holders, holderId);
+    const transfer = Wallet.find(this.state.transfers, transferId);
+    const holder = Wallet.find(this.state.holders, holderId);
     this.checkRule(new AssetTransferShouldBePending(transfer));
     this.checkRule(new AssetTransferSigneeShouldBeUnique(transfer, holder));
     this.apply(new WalletAssetTransferSignedEvent(transferId, holderId, this.ID));
   }
 
   public async completeAssetTransfer(transferId: UniqueEntityID): Promise<void> {
-    const transfer = this.find(this.props.transfers, transferId);
+    const transfer = Wallet.find(this.state.transfers, transferId);
     this.checkRule(new AssetTransferShouldBePending(transfer));
     this.checkRule(new AssetTransferShouldHaveReachedSetThreshold(transfer));
     this.apply(new WalletAssetTransferCompletedEvent(transferId, this.ID));
@@ -226,16 +322,16 @@ export class Wallet extends AggregateRoot<WalletProps> {
   }
 
   private getTypeBalance(type: WalletBalanceType): WalletBalance {
-    if (type.IS_AVAILABLE) return this.props.availableBalance;
-    if (type.IS_LEDGER) return this.props.ledgerBalance;
-    return this.props.balance;
+    if (type.IS_AVAILABLE) return this.state.availableBalance;
+    if (type.IS_LEDGER) return this.state.ledgerBalance;
+    return this.state.balance;
   }
 
   private async handleAuthorizationRequest(
     request: NewWalletTransactionDTO,
     transactionId: UniqueEntityID,
   ): Promise<void> {
-    this.checkRule(new AmountShouldNotExceedBalance(this.props.availableBalance, request.amount));
+    this.checkRule(new AmountShouldNotExceedBalance(this.state.availableBalance, request.amount));
     this.apply(new WalletAuthTxnCreatedEvent(request, transactionId, this.ID));
   }
 
@@ -251,7 +347,7 @@ export class Wallet extends AggregateRoot<WalletProps> {
     transactionId: UniqueEntityID,
   ): Promise<void> {
     if (request.type.action.IS_DEBIT) {
-      this.checkRule(new AmountShouldNotExceedBalance(this.props.availableBalance, request.amount));
+      this.checkRule(new AmountShouldNotExceedBalance(this.state.availableBalance, request.amount));
     }
     this.apply(new WalletFinancialTxnCreatedEvent(request, transactionId, this.ID));
   }
@@ -260,7 +356,7 @@ export class Wallet extends AggregateRoot<WalletProps> {
     request: NewWalletTransactionDTO,
     transactionId: UniqueEntityID,
   ): Promise<void> {
-    const hold = this.props.holds.find((hold) => hold.authTxnId.equals(request.originalTxnId));
+    const hold = this.state.holds.find((hold) => hold.authTxnId.equals(request.originalTxnId));
     if (!hold) {
       throw new DomainValidationException('Auth hold not found for financial transaction request');
     }
@@ -274,7 +370,7 @@ export class Wallet extends AggregateRoot<WalletProps> {
     request: NewWalletTransactionDTO,
     transactionId: UniqueEntityID,
   ): Promise<void> {
-    const transaction = this.find(this.props.transactions, request.originalTxnId);
+    const transaction = Wallet.find(this.state.transactions, request.originalTxnId);
     if (!transaction) {
       throw new DomainValidationException('Reference transaction not found.');
     }
@@ -298,101 +394,5 @@ export class Wallet extends AggregateRoot<WalletProps> {
     if (type.IS_FINANCIAL_ADV) return this.handleFinancialAdvice.bind(this);
     if (type.IS_REVERSAL) return this.handleReversalRequest.bind(this);
     if (type.IS_REVERSAL_ADV) return this.handleReversalAdvice.bind(this);
-  }
-
-  private $onWalletCreatedEvent($event: WalletCreatedEvent) {
-    this.props.id = $event.payload.walletId;
-    this.props.name = $event.payload.name;
-    this.props.type = $event.payload.type;
-    const holder = WalletHolder.create({ walletId: this.props.id, accountId: $event.payload.initiatorId });
-    holder.assignAsAdministrator();
-    this.props.holders.push(holder);
-  }
-
-  private $onWalletAssetTransferCreatedEvent($event: WalletAssetTransferCreatedEvent) {
-    const transfer = WalletAssetTransfer.create($event.payload, $event.payload.transferId);
-    this.props.transfers.push(transfer);
-  }
-
-  private $onWalletAssetTransferSignedEvent($event: WalletAssetTransferSignedEvent) {
-    const transfer = this.find(this.props.transfers, $event.payload.transferId);
-    const holder = this.find(this.props.holders, $event.payload.holderId);
-    transfer.sign(holder);
-  }
-
-  private $onWalletAssetTransferCompletedEvent($event: WalletAssetTransferCompletedEvent) {
-    const transfer = this.find(this.props.transfers, $event.payload.transferId);
-
-    if (transfer.type.IS_BALANCE) {
-      this.props.balance = this.props.balance.subtract(transfer.value);
-      this.props.availableBalance = this.props.availableBalance.add(transfer.value);
-    }
-
-    if (transfer.type.IS_STAKE) {
-      const fromHolder = this.find(this.props.holders, transfer.sourceId);
-      const toHolder = this.find(this.props.holders, transfer.destinationId);
-      fromHolder.subtractFromStake(transfer.value);
-      toHolder.addToStake(transfer.value);
-    }
-
-    if (transfer.type.IS_CONTROL) {
-      const administrator = this.props.holders.find((holder) => holder.IS_ADMIN);
-      const holder = this.find(this.props.holders, transfer.destinationId);
-      administrator.revokeAsAdministrator();
-      holder.assignAsAdministrator();
-    }
-  }
-
-  private $onWalletAuthTxnCreatedEvent($event: WalletAuthTxnCreatedEvent) {
-    const transaction = WalletTransaction.create($event.payload, this.ID);
-    const holdData = new NewWalletAuthHoldDTO();
-    holdData.authTxnId = transaction.ID;
-    holdData.amount = $event.payload.amount;
-    holdData.period = 30;
-    const hold = WalletAuthHold.create(holdData, this.ID);
-    this.props.holdBalance = this.props.holdBalance.add($event.payload.amount);
-    this.props.balance = this.props.balance.subtract($event.payload.amount);
-    this.props.transactions.push(transaction);
-    this.props.holds.push(hold);
-  }
-
-  private $onWalletAuthAdvTxnCreatedEvent($event: WalletAuthAdvTxnCreatedEvent) {
-    const transaction = WalletTransaction.create($event.payload, this.ID);
-    const hold = this.find(this.props.holds, $event.payload.originalTxnId);
-    this.props.holdBalance = this.props.holdBalance.subtract(hold.balance);
-    this.props.balance = this.props.balance.add(hold.balance);
-    this.props.availableBalance = this.props.ledgerBalance.add(hold.balance);
-    hold.remove();
-    this.props.transactions.push(transaction);
-  }
-
-  private $onWalletFinancialTxnCreatedEvent($event: WalletFinancialTxnCreatedEvent) {
-    const transaction = WalletTransaction.create($event.payload, this.ID);
-    if (transaction.action.IS_DEBIT) {
-      this.props.balance = this.props.balance.subtract($event.payload.amount);
-      this.props.availableBalance = this.props.availableBalance.subtract($event.payload.amount);
-      this.props.ledgerBalance = this.props.ledgerBalance.subtract($event.payload.amount);
-    } else {
-      this.props.balance = this.props.balance.add($event.payload.amount);
-      this.props.availableBalance = this.props.availableBalance.add($event.payload.amount);
-      this.props.ledgerBalance = this.props.ledgerBalance.add($event.payload.amount);
-    }
-    this.props.transactions.push(transaction);
-  }
-
-  private $onWalletFinancialAdvTxnCreatedEvent($event: WalletFinancialAdvTxnCreatedEvent) {
-    const hold = this.find(this.props.holds, $event.payload.originalTxnId);
-    const transaction = WalletTransaction.create($event.payload, this.ID);
-    this.props.transactions.push(transaction);
-    hold.release($event.payload.amount);
-  }
-
-  private $onWalletReversalTxnCreatedEvent($event: WalletReversalTxnCreatedEvent) {
-    const refTxn = this.find(this.props.transactions, $event.payload.originalTxnId);
-    const txnData = { ...$event.payload, status: refTxn.action.INVERSE.value };
-    const transaction = WalletTransaction.create(txnData, this.ID);
-    this.props.transactions.push(transaction);
-    if (refTxn.action.IS_CREDIT) this.props.balance = this.props.balance.add(refTxn.amount);
-    else this.props.balance = this.props.balance.subtract(refTxn.amount);
   }
 }

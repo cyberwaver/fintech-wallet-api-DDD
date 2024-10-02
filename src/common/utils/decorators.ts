@@ -1,6 +1,6 @@
-import { AggregateRoot } from '@Common/domain/AggregateRoot';
+import { AggregateRoot as AggRoot } from '@Common/domain/AggregateRoot';
 import { UniqueEntityID } from '@Common/domain/UniqueEntityID';
 import { SetMetadata } from '@nestjs/common';
 
-export const ForAggregateRoot = <T extends { id: UniqueEntityID }>(clazz: typeof AggregateRoot<T>) =>
+export const AggregateRoot = <T extends { id: UniqueEntityID }>(clazz: typeof AggRoot<T>) =>
   SetMetadata('aggregate', clazz);

@@ -54,10 +54,10 @@ export abstract class AggregateRoot<P extends { id: UniqueEntityID }> extends En
   }
 
   private syncEventPayload(event: DomainEvent): void {
-    const method = this[`$on${event.name}`];
+    const method = this.state[`$on${event.name}`];
     if (typeof method !== 'function') return;
     // console.log({ method, event });
-    method.call(this, event);
+    method.call(this.state, event);
   }
 
   private logDomainEventAdded(domainEvent: IDomainEvent): void {
@@ -71,16 +71,16 @@ export abstract class AggregateRoot<P extends { id: UniqueEntityID }> extends En
     // );
   }
 
-  protected find<T extends Entity<any>>(entities: T[], id: UniqueEntityID | string): T {
+  public static find<T extends Entity<any>>(entities: T[], id: UniqueEntityID | string): T {
     if (typeof id == 'string') id = new UniqueEntityID(id);
     return entities.find((entity) => entity.ID.equals(id));
   }
 
   public toObject(): Record<string, unknown> {
-    return convertDomainPropsToObject(this.props);
+    return convertDomainPropsToObject(this.state);
   }
 
   public toJSON(): string {
-    return JSON.parse(JSON.stringify(this.props));
+    return JSON.parse(JSON.stringify(this.state));
   }
 }

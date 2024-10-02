@@ -2,7 +2,7 @@ import { Result } from '@Common/utils/Result';
 import { CommandHandler } from '@nestjs/cqrs';
 import { CommandHandlerBase } from 'src/common/application/CommandHandlerBase';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
-import { IPersistenceManager } from '@Common/infrastructure/IPersistenceManager';
+import { IPersistenceManager } from '@Common/infrastructure/persistence/IPersistenceManager';
 import { IWalletsRepository } from 'src/modules/wallet/domain/wallet/IWalletsRepository';
 import { SignWalletAssetTransferCommand } from './SignWalletAssetTransferCommand';
 

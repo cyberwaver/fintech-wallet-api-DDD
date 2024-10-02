@@ -1,26 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { instanceToInstance, plainToClass, plainToClassFromExist, plainToInstance } from 'class-transformer';
+import { plainToClass } from 'class-transformer';
 import { AuthenticationId } from '@Access/domain/authentication/AuthenticationId';
-import { Authentication, AuthenticationProps } from '@Access/domain/authentication/Authentication';
+import { Authentication, AuthenticationState } from '@Access/domain/authentication/Authentication';
 import { EntityManager, EntityRepository, FilterQuery } from '@mikro-orm/postgresql';
 import { Authentication as AuthenticationEntity } from '../entities/Authentication';
 import { Result } from '@Common/utils/Result';
 import { UniqueEntityID } from '@Common/domain/UniqueEntityID';
-import ARepository from '@Common/infrastructure/ARepository';
-import { ForAggregateRoot } from '@Common/utils/decorators';
+import ARepository from '@Common/infrastructure/persistence/mikro-orm/ARepository';
+import { AggregateRoot } from '@Common/utils/decorators';
 import { IAuthenticationsRepository } from '@Access/domain/authentication/IAuthenticationsRepository';
 import { NotFoundException } from '@Common/exceptions/NotFoundException';
 
 @Injectable()
-@ForAggregateRoot(Authentication)
+@AggregateRoot(Authentication)
 export default class AuthenticationsRepository
-  extends ARepository<Authentication>
+  extends ARepository<AuthenticationEntity, Authentication>
   implements IAuthenticationsRepository
 {
   e: Authentication;
   private authenticationDao: EntityRepository<AuthenticationEntity>;
-  constructor(private em: EntityManager) {
-    super();
+  constructor(em: EntityManager) {
+    super('Authentication', em, AuthenticationEntity);
     this.authenticationDao = em.getRepository(AuthenticationEntity);
   }
 
@@ -39,33 +39,15 @@ export default class AuthenticationsRepository
     throw new Error('Method not implemented.');
   }
 
-  async sync(authentication: Authentication): Promise<Result<void, Error>> {
-    let authEntity: AuthenticationEntity;
-    if (authentication.ID.isNew) authEntity = new AuthenticationEntity();
-    else {
-      authEntity = await this.authenticationDao.findOne({ id: authentication.ID.toString() });
-      if (!authEntity) return Result.fail(new NotFoundException('Authentication not found'));
-    }
-
-    authEntity.assign(authentication.toObject());
-    this.em.persist(authEntity);
-
-    return Result.ok();
-  }
-
   async findOneByEmailAndType(email: string, type: string): Promise<Result<Authentication>> {
     return this.findOne({ email, type });
-  }
-
-  async findById(id: AuthenticationId): Promise<Result<Authentication>> {
-    return this.findOne({ id: id.toString() });
   }
 
   async findOne(where: FilterQuery<AuthenticationEntity>): Promise<Result<Authentication>> {
     try {
       const response = await this.authenticationDao.findOne(where);
       if (!response) return Result.fail(new NotFoundException('Authentication not found'));
-      const props = plainToClass(AuthenticationProps, response.toPOJO());
+      const props = plainToClass(AuthenticationState, response.toPOJO());
       return Result.ok(new Authentication(props));
     } catch (e) {
       return Result.fail(e);

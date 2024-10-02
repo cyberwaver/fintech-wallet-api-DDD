@@ -1,12 +1,10 @@
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
+import { UpdateWalletTemplateDTO } from './UpdateWalletTemplateDTO';
 
-export class NewWalletTemplateDTO {
+export class NewWalletTemplateDTO extends UpdateWalletTemplateDTO {
   @IsNotEmpty()
   name: string;
 
-  @IsNumber()
-  amount: number;
-
   @IsNotEmpty()
-  type: string;
+  accountTiers: number[];
 }

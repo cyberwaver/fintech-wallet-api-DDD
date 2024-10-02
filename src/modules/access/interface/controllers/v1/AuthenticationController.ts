@@ -2,10 +2,10 @@ import { CreateAuthenticationCommand } from '@Access/application/commands/Create
 import { GenerateAuthTokensCommand } from '@Access/application/commands/GenerateAuthTokens/GenerateAuthTokensCommand';
 import { RequestPasswordResetCommand } from '@Access/application/commands/RequestPasswordReset/RequestPasswordResetCommand';
 import { ResetPasswordCommand } from '@Access/application/commands/ResetPassword/ResetPasswordCommand';
-import CreateAuthenticationRequestDTO from '@Access/application/dtos/CreateAuthenticationRequestDTO';
-import GenerateAuthTokensRequestDTO from '@Access/application/dtos/GenerateAuthTokensRequestDTO';
-import RequestPasswordResetDTO from '@Access/application/dtos/RequestPasswordResetDTO';
-import ResetPasswordDTO from '@Access/application/dtos/ResetPasswordDTO';
+import CreateAuthenticationRequestDTO from '@Access/interface/controllers/v1/dto/CreateAuthenticationRequestDTO';
+import GenerateAuthTokensRequestDTO from '@Access/interface/controllers/v1/dto/GenerateAuthTokensRequestDTO';
+import RequestPasswordResetDTO from '@Access/interface/controllers/v1/dto/RequestPasswordResetDTO';
+import ResetPasswordDTO from '@Access/interface/controllers/v1/dto/ResetPasswordDTO';
 import { AuthTokens } from '@Access/domain/authentication/AuthenticationService';
 import ResponseEntity from '@Common/interface/ResponseEntity';
 import { Body, Controller, Get, HttpException, HttpStatus, Post } from '@nestjs/common';

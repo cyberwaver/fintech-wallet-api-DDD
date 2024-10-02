@@ -53,37 +53,37 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   public get status(): UserStatus {
-    return this.props.status;
+    return this.state.status;
   }
 
   public async activate(): Promise<void> {
-    await this.checkRule(new UserShouldBeInactive(this.props.status));
+    await this.checkRule(new UserShouldBeInactive(this.state.status));
     this.apply(new UserActivatedEvent(this.ID));
   }
 
   public async deactivate(): Promise<void> {
-    await this.checkRule(new UserShouldBeActive(this.props.status));
+    await this.checkRule(new UserShouldBeActive(this.state.status));
     this.apply(new UserDeactivatedEvent(this.ID));
   }
 
   public async updateOnboarding(request: UserOnboardingUpdateDTO): Promise<void> {
-    await this.checkRule(new UserShouldBeOnboarding(this.props.status));
+    await this.checkRule(new UserShouldBeOnboarding(this.state.status));
     this.apply(new UserOnboardingUpdatedEvent(request, this.ID));
   }
 
   public async initiateOnboardingCompletion(): Promise<void> {
-    await this.checkRule(new UserShouldBeOnboarding(this.props.status));
+    await this.checkRule(new UserShouldBeOnboarding(this.state.status));
     this.apply(new UserOnboardingCompletionInitiatedEvent(this.ID));
   }
 
   public async recordOnboardingRuleValidation(request: UserOnboardingRuleValidatedDTO): Promise<void> {
-    await this.checkRule(new UserOnboardingShouldBeValidating(this.props.status));
+    await this.checkRule(new UserOnboardingShouldBeValidating(this.state.status));
     this.apply(new UserOnboardingRuleValidationRecordedEvent(request, this.ID));
     if (!request.passed) this.apply(new UserOnboardingValidationFailedEvent(this.ID));
   }
 
   public async completeOnboarding(): Promise<void> {
-    await this.checkRule(new UserOnboardingShouldBeValidating(this.props.status));
+    await this.checkRule(new UserOnboardingShouldBeValidating(this.state.status));
     this.apply(new UserOnboardingCompletedEvent(this.ID));
   }
 
@@ -94,52 +94,52 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   private $onUserActivatedEvent() {
-    this.props.status = UserStatus.Active;
+    this.state.status = UserStatus.Active;
   }
 
   private $onUserDeactivatedEvent() {
-    this.props.status = UserStatus.Inactive;
+    this.state.status = UserStatus.Inactive;
   }
 
   private $onUserOnboardingUpdatedEvent($event: UserOnboardingUpdatedEvent) {
-    this.props.firstName = $event.payload.firstName;
-    this.props.lastName = $event.payload.lastName;
-    this.props.phone = $event.payload.phone;
-    this.props.bvn = $event.payload.bvn;
-    this.props.address = new Address($event.payload.address);
+    this.state.firstName = $event.payload.firstName;
+    this.state.lastName = $event.payload.lastName;
+    this.state.phone = $event.payload.phone;
+    this.state.bvn = $event.payload.bvn;
+    this.state.address = new Address($event.payload.address);
   }
 
   private $onUserOnboardingCompletionInitiatedEvent() {
-    this.props.status = UserStatus.Validating;
-    this.props.validationRules.push(ValidationRule.CheckBVN);
-    this.props.validationRules.push(ValidationRule.CheckDefaultBankAccount);
+    this.state.status = UserStatus.Validating;
+    this.state.validationRules.push(ValidationRule.CheckBVN);
+    this.state.validationRules.push(ValidationRule.CheckDefaultBankAccount);
   }
 
   private $onUserOnboardingRuleValidationRecordedEvent($event: UserOnboardingRuleValidationRecordedEvent) {
-    const rule = this.props.validationRules.find((rule) => rule.value.label == $event.payload.label);
+    const rule = this.state.validationRules.find((rule) => rule.value.label == $event.payload.label);
     if (!rule) return;
-    this.props.validationRules = this.props.validationRules.filter(
+    this.state.validationRules = this.state.validationRules.filter(
       (rule) => rule.value.label !== $event.payload.label,
     );
-    this.props.validationRules.push(new ValidationRule($event.payload));
+    this.state.validationRules.push(new ValidationRule($event.payload));
   }
 
   private $onUserOnboardingCompletedEvent($event: UserOnboardingCompletedEvent) {
-    this.props.status = UserStatus.Active;
-    this.props.onboardedAt = $event.payload.onboardedAt;
+    this.state.status = UserStatus.Active;
+    this.state.onboardedAt = $event.payload.onboardedAt;
   }
 
   private $onUserOnboardingValidationFailedEvent() {
-    this.props.status = UserStatus.ValidationFailed;
+    this.state.status = UserStatus.ValidationFailed;
   }
 
   private $onUserCreatedEvent($event: UserCreatedEvent) {
-    this.props.id = $event.payload.id;
-    this.props.email = $event.payload.email;
-    this.props.firstName = $event.payload.firstName;
-    this.props.lastName = $event.payload.lastName;
-    this.props.authId = new UniqueEntityID($event.payload.authId);
-    this.props.status = UserStatus.Pending;
-    this.props.createdAt = $event.payload.createdAt;
+    this.state.id = $event.payload.id;
+    this.state.email = $event.payload.email;
+    this.state.firstName = $event.payload.firstName;
+    this.state.lastName = $event.payload.lastName;
+    this.state.authId = new UniqueEntityID($event.payload.authId);
+    this.state.status = UserStatus.Pending;
+    this.state.createdAt = $event.payload.createdAt;
   }
 }

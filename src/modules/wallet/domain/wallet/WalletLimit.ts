@@ -1,8 +1,8 @@
 import { ValueObject } from 'src/common/domain/ValueObject';
 import { WalletLimitType } from './WalletLimitType';
 import { WalletTransactionType } from './WalletTransactionType';
-import { WalletTemplateProps } from '../wallet-template/WalletTemplate';
 import { Amount } from 'src/common/domain/Amount';
+import { WalletTemplateState } from '../wallet-template/WalletTemplate';
 
 type WalletLimitProps = {
   depositPerTxn: number;
@@ -55,7 +55,10 @@ type WalletLimitProps = {
 };
 
 export class WalletLimit extends ValueObject<WalletLimitProps> {
-  constructor(value: WalletLimitProps, private sessionValue = value) {
+  constructor(
+    value: WalletLimitProps,
+    private sessionValue = value,
+  ) {
     super(value);
   }
 
@@ -81,7 +84,7 @@ export class WalletLimit extends ValueObject<WalletLimitProps> {
     return new WalletLimit({ ...this.value, ...value }, { ...this.sessionValue, ...value });
   }
 
-  public rebase(templateLimit: WalletTemplateProps): WalletLimit {
+  public rebase(templateLimit: WalletTemplateState): WalletLimit {
     const baseLimit = {
       depositPerTxn: templateLimit.depositPerTxnLimit,
       withdrawalPerTxn: templateLimit.withdrawalPerTxnLimit,

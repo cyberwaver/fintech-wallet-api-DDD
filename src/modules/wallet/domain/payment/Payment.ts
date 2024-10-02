@@ -25,7 +25,7 @@ export class PaymentProps {
 }
 
 export class Payment extends AggregateRoot<PaymentProps> {
-  public readonly type = this.props.type;
+  public readonly type = this.state.type;
   constructor(props?: PaymentProps) {
     super(props);
   }
@@ -49,28 +49,28 @@ export class Payment extends AggregateRoot<PaymentProps> {
   }
 
   private $onTransferPaymentCreatedEvent($event: TransferPaymentCreatedEvent) {
-    this.props.type = PaymentType.Transfer;
-    this.props.walletId = new UniqueEntityID($event.payload.fromWalletId);
-    this.props.amount = $event.payload.amount;
-    this.props.status = PaymentStatus.Pending;
-    this.props.meta = {
+    this.state.type = PaymentType.Transfer;
+    this.state.walletId = new UniqueEntityID($event.payload.fromWalletId);
+    this.state.amount = $event.payload.amount;
+    this.state.status = PaymentStatus.Pending;
+    this.state.meta = {
       toWalletId: new UniqueEntityID($event.payload.toWalletId),
     };
   }
 
   private $onTopupPaymentCreatedEvent($event: TopupPaymentCreatedEvent) {
-    this.props.type = PaymentType.Transfer;
-    this.props.walletId = new UniqueEntityID($event.payload.walletId);
-    this.props.amount = $event.payload.amount;
-    this.props.status = PaymentStatus.Pending;
+    this.state.type = PaymentType.Transfer;
+    this.state.walletId = new UniqueEntityID($event.payload.walletId);
+    this.state.amount = $event.payload.amount;
+    this.state.status = PaymentStatus.Pending;
   }
 
   private $onWithdrawalPaymentCreatedEvent($event: WithdrawalPaymentCreatedEvent) {
-    this.props.type = PaymentType.Transfer;
-    this.props.walletId = new UniqueEntityID($event.payload.walletId);
-    this.props.amount = $event.payload.amount;
-    this.props.status = PaymentStatus.Pending;
-    this.props.meta = {
+    this.state.type = PaymentType.Transfer;
+    this.state.walletId = new UniqueEntityID($event.payload.walletId);
+    this.state.amount = $event.payload.amount;
+    this.state.status = PaymentStatus.Pending;
+    this.state.meta = {
       bankName: $event.payload.bankName,
       bankAccountName: $event.payload.bankAccountName,
       bankAccountNumber: $event.payload.bankAccountNumber,

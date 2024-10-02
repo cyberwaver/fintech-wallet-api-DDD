@@ -2,18 +2,18 @@ import { UniqueEntityID } from './UniqueEntityID';
 
 export abstract class Entity<P extends { id: UniqueEntityID }> {
   private readonly id: UniqueEntityID;
-  protected props: P;
+  protected state: P;
 
-  constructor(props?: P) {
-    this.props = Object.create(props ?? {});
+  constructor(state?: P) {
+    this.state = Object.create(state ?? {});
   }
 
   get ID(): UniqueEntityID {
-    return this.props.id;
+    return this.state.id;
   }
 
   protected set<K extends keyof P>(key: K, value: P[K]): void {
-    this.props[key] = value;
+    this.state[key] = value;
   }
 
   public equals(object?: Entity<P>): boolean {
@@ -27,6 +27,6 @@ export abstract class Entity<P extends { id: UniqueEntityID }> {
   }
 
   public getProps(): P {
-    return Object.create(this.props);
+    return Object.create(this.state);
   }
 }

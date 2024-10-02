@@ -39,17 +39,17 @@ export class Merchant extends AggregateRoot<MerchantProps> {
   }
 
   public async activate(): Promise<void> {
-    await this.checkRule(new MerchantShouldBeInactive(this.props.status));
+    await this.checkRule(new MerchantShouldBeInactive(this.state.status));
     this.apply(new MerchantActivatedEvent(this.ID));
   }
 
   public async deactivate(): Promise<void> {
-    await this.checkRule(new MerchantShouldBeActive(this.props.status));
+    await this.checkRule(new MerchantShouldBeActive(this.state.status));
     this.apply(new MerchantDeactivatedEvent(this.ID));
   }
 
   public async completeOnboarding(): Promise<void> {
-    await this.checkRule(new MerchantShouldBePendingOnboarding(this.props.status));
+    await this.checkRule(new MerchantShouldBePendingOnboarding(this.state.status));
     this.apply(new MerchantOnboardingCompletedEvent(this.ID));
   }
 
@@ -61,25 +61,25 @@ export class Merchant extends AggregateRoot<MerchantProps> {
   }
 
   private $onMerchantActivatedEvent() {
-    this.props.status = MerchantStatus.Active;
+    this.state.status = MerchantStatus.Active;
   }
 
   private $onMerchantDeactivatedEvent() {
-    this.props.status = MerchantStatus.Inactive;
+    this.state.status = MerchantStatus.Inactive;
   }
 
   private $onMerchantOnboardingCompletedEvent($event: MerchantOnboardingCompletedEvent) {
-    this.props.status = MerchantStatus.Active;
-    this.props.onboardedAt = $event.payload.onboardedAt;
+    this.state.status = MerchantStatus.Active;
+    this.state.onboardedAt = $event.payload.onboardedAt;
   }
 
   private $onMerchantCreatedEvent($event: MerchantCreatedEvent) {
-    this.props.id = $event.payload.id;
-    this.props.name = $event.payload.name;
-    this.props.authId = new UniqueEntityID($event.payload.authId);
-    this.props.email = $event.payload.email;
-    this.props.currencyCode = $event.payload.currencyCode;
-    this.props.status = MerchantStatus.Pending;
-    this.props.createdAt = $event.payload.createdAt;
+    this.state.id = $event.payload.id;
+    this.state.name = $event.payload.name;
+    this.state.authId = new UniqueEntityID($event.payload.authId);
+    this.state.email = $event.payload.email;
+    this.state.currencyCode = $event.payload.currencyCode;
+    this.state.status = MerchantStatus.Pending;
+    this.state.createdAt = $event.payload.createdAt;
   }
 }

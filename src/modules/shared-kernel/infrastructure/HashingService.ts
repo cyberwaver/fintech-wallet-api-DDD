@@ -1,5 +1,5 @@
 import * as bcrypt from 'bcrypt';
-import { IHashingService } from '@Common/infrastructure/IHashingService';
+import { IHashingService } from '@Common/infrastructure/crypto/IHashingService';
 
 export default class HashingService implements IHashingService {
   hashPassword(password: string): Promise<string> {

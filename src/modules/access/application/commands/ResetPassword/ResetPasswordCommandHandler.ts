@@ -4,11 +4,11 @@ import { CommandHandlerBase } from 'src/common/application/CommandHandlerBase';
 import { UniqueEntityID } from 'src/common/domain/UniqueEntityID';
 import { InvalidCredentialException } from 'src/common/exceptions/InvalidCredentialException';
 import { AuthenticationService } from 'src/modules/access/domain/authentication/AuthenticationService';
-import { PasswordResetDTO } from 'src/modules/access/domain/authentication/dto/PasswordResetDTO';
+import { PasswordResetDTO } from '@Access/domain/authentication/dto/PasswordResetDTO';
 import { IAuthenticationsRepository } from 'src/modules/access/domain/authentication/IAuthenticationsRepository';
 import { ResetPasswordCommand } from './ResetPasswordCommand';
 import { Result } from '@Common/utils/Result';
-import { IPersistenceManager } from '@Common/infrastructure/IPersistenceManager';
+import { IPersistenceManager } from '@Common/infrastructure/persistence/IPersistenceManager';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()

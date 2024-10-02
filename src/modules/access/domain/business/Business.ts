@@ -38,17 +38,17 @@ export class Business extends AggregateRoot<BusinessProps> {
   }
 
   public async activate(): Promise<void> {
-    await this.checkRule(new BusinessShouldBeInactive(this.props.status));
+    await this.checkRule(new BusinessShouldBeInactive(this.state.status));
     this.apply(new BusinessActivatedEvent(this.ID));
   }
 
   public async deactivate(): Promise<void> {
-    await this.checkRule(new BusinessShouldBeActive(this.props.status));
+    await this.checkRule(new BusinessShouldBeActive(this.state.status));
     this.apply(new BusinessDeactivatedEvent(this.ID));
   }
 
   public async completeOnboarding(): Promise<void> {
-    await this.checkRule(new BusinessShouldBePendingOnboarding(this.props.status));
+    await this.checkRule(new BusinessShouldBePendingOnboarding(this.state.status));
     this.apply(new BusinessOnboardingCompletedEvent(this.ID));
   }
 
@@ -60,26 +60,26 @@ export class Business extends AggregateRoot<BusinessProps> {
   }
 
   private $onBusinessActivatedEvent() {
-    this.props.status = BusinessStatus.Active;
+    this.state.status = BusinessStatus.Active;
   }
 
   private $onBusinessDeactivatedEvent() {
-    this.props.status = BusinessStatus.Inactive;
+    this.state.status = BusinessStatus.Inactive;
   }
 
   private $onBusinessOnboardingCompletedEvent($event: BusinessOnboardingCompletedEvent) {
-    this.props.status = BusinessStatus.Active;
-    this.props.onboardedAt = $event.payload.onboardedAt;
+    this.state.status = BusinessStatus.Active;
+    this.state.onboardedAt = $event.payload.onboardedAt;
   }
 
   private $onBusinessCreatedEvent($event: BusinessCreatedEvent) {
-    this.props.id = $event.payload.id;
-    this.props.name = $event.payload.name;
-    this.props.authId = new UniqueEntityID($event.payload.authId);
-    this.props.email = $event.payload.email;
-    this.props.abbr = $event.payload.abbr;
-    this.props.keyPrefix = $event.payload.keyPrefix;
-    this.props.status = BusinessStatus.Pending;
-    this.props.createdAt = $event.payload.createdAt;
+    this.state.id = $event.payload.id;
+    this.state.name = $event.payload.name;
+    this.state.authId = new UniqueEntityID($event.payload.authId);
+    this.state.email = $event.payload.email;
+    this.state.abbr = $event.payload.abbr;
+    this.state.keyPrefix = $event.payload.keyPrefix;
+    this.state.status = BusinessStatus.Pending;
+    this.state.createdAt = $event.payload.createdAt;
   }
 }

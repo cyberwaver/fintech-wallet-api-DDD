@@ -49,12 +49,12 @@ export class WalletAuthHold extends Entity<WalletAuthHoldProps> {
     super(props);
   }
 
-  public readonly status = this.props.status;
-  public readonly authTxnId = this.props.authTxnId;
-  public readonly amount = this.props.amount;
+  public readonly status = this.state.status;
+  public readonly authTxnId = this.state.authTxnId;
+  public readonly amount = this.state.amount;
 
   public get balance(): Amount {
-    return this.amount.subtract(this.props.amountReleased);
+    return this.amount.subtract(this.state.amountReleased);
   }
 
   public isAmountReleasable(amount: Amount) {
@@ -65,19 +65,19 @@ export class WalletAuthHold extends Entity<WalletAuthHoldProps> {
     if (!this.isAmountReleasable(amount)) {
       throw new DomainValidationException('Hold balance is less than the amount to be released.');
     }
-    this.props.amountReleased = this.props.amountReleased.add(amount);
-    this.props.status = WalletAuthHoldStatus.PartiallyReleased;
-    if (this.props.amountReleased.equals(this.amount)) this.props.status = WalletAuthHoldStatus.Released;
-    this.props.releasedAt = new Date();
+    this.state.amountReleased = this.state.amountReleased.add(amount);
+    this.state.status = WalletAuthHoldStatus.PartiallyReleased;
+    if (this.state.amountReleased.equals(this.amount)) this.state.status = WalletAuthHoldStatus.Released;
+    this.state.releasedAt = new Date();
   }
 
   public void(): void {
-    this.props.status = WalletAuthHoldStatus.Voided;
-    this.props.voidedAt = new Date();
+    this.state.status = WalletAuthHoldStatus.Voided;
+    this.state.voidedAt = new Date();
   }
 
   public remove(): void {
-    this.props.hasExpired = true;
+    this.state.hasExpired = true;
   }
 
   public static create(

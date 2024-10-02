@@ -1,5 +1,5 @@
 import { ApplicationException } from '@Common/exceptions/ApplicationException';
-import { IJWTService } from '@Common/infrastructure/IJWTService';
+import { IJWTService } from '@Common/infrastructure/crypto/IJWTService';
 import { Result } from '@Common/utils/Result';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';

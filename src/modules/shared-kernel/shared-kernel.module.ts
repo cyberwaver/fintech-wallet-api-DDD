@@ -4,12 +4,12 @@ import { DiscoveryModule, DiscoveryService } from '@golevelup/nestjs-discovery';
 import RepositoryProvider from './infrastructure/persistence/RepositoryProvider';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { ConfigurableModuleClass } from './shared-kernel.module-definition';
-import { IPersistenceManager } from '@Common/infrastructure/IPersistenceManager';
+import { IPersistenceManager } from '@Common/infrastructure/persistence/IPersistenceManager';
 import PersistenceManager from './infrastructure/persistence/PersistenceManager';
-import { IHashingService } from '@Common/infrastructure/IHashingService';
+import { IHashingService } from '@Common/infrastructure/crypto/IHashingService';
 import HashingService from './infrastructure/HashingService';
-import { IJWTService } from '@Common/infrastructure/IJWTService';
 import JWTService from './infrastructure/persistence/JWTService';
+import { IJWTService } from '@Common/infrastructure/crypto/IJWTService';
 
 export interface SharedKernelModuleOptions {
   discoveryService: DiscoveryService;

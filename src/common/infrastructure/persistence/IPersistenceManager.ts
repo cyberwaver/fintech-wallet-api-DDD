@@ -1,6 +1,6 @@
 import { Result } from '@Common/utils/Result';
-import { AggregateRoot } from '../domain/AggregateRoot';
-import { UniqueEntityID } from '../domain/UniqueEntityID';
+import { AggregateRoot } from '../../domain/AggregateRoot';
+import { UniqueEntityID } from '../../domain/UniqueEntityID';
 import { IRepository } from '@Common/domain/IRepository';
 
 export abstract class IPersistenceManager {

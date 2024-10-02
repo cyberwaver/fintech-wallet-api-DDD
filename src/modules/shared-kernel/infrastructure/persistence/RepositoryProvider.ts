@@ -2,7 +2,7 @@ import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { IRepository } from '@Common/domain/IRepository';
 import { UniqueEntityID } from '@Common/domain/UniqueEntityID';
 import { AggregateRoot } from '@Common/domain/AggregateRoot';
-import ARepository from '@Common/infrastructure/ARepository';
+import ARepository from '@Common/infrastructure/persistence/mikro-orm/ARepository';
 import { SharedKernelModuleOptions } from '@SharedKernel/shared-kernel.module';
 import { MODULE_OPTIONS_TOKEN } from '@SharedKernel/shared-kernel.module-definition';
 

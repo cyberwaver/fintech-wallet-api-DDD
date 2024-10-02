@@ -28,12 +28,19 @@ export class GenerateAuthTokensCommandHandler extends CommandHandlerBase<
     if (authenticationResult.IS_FAILURE) return Result.fail(authenticationResult.error);
     const authentication = authenticationResult.value;
 
-    const result = await Result.resolve(authentication.generateTokens(command.password, this.authService));
-
-    if (result.IS_SUCCESS) return Result.ok(result.value);
-
-    if (result.error instanceof InvalidCredentialException)
-      return Result.fail(new InvalidCredentialException('Invalid username or password'));
-    return Result.fail(result.error);
+    const passwordMatches = await this.authService.comparePassword(command.password, authentication.password);
+    if (!passwordMatches) return Result.fail(new InvalidCredentialException('Invalid username or password'));
+    const result = await this.authService.generateAuthTokens(
+      {
+        authId: authentication.ID,
+        type: authentication.type,
+        firstName: authentication.firstName,
+        lastName: authentication.lastName,
+        email: authentication.email,
+      },
+      authentication.type,
+    );
+    if (result.IS_FAILURE) return Result.fail(result.error);
+    return Result.ok(result.value);
   }
 }
